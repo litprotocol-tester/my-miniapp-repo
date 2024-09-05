@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import litLogo from './assets/lit.png';
 import './App.css';
 
