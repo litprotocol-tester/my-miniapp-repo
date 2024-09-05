@@ -64,16 +64,65 @@ function App() {
         encoder.encode(import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
       );
 
+      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${JSON.stringify(user)}`;
+
       // Construct the dataCheckString using the sorted user entries
 
+      
+      async function sha256(message: any) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      const attempt1 = `auth_date=${auth_date}\nquery_id=${query_id}\n${JSON.stringify(user)}`;
+      console.log("Attempt 1:", attempt1);
+      sha256(attempt1).then(hash => console.log("Hash 1:", hash));
+      
+      // Attempt 2: Sorted user object
       const sortedUser = Object.fromEntries(
         Object.entries(user).sort(([a], [b]) => a.localeCompare(b))
       );
-
-      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${JSON.stringify(sortedUser)}`;
-      console.log("dataCheckString: ", dataCheckString);
-      console.log("dataCheckString: ", dataCheckString);
-
+      const attempt2 = `auth_date=${auth_date}\nquery_id=${query_id}\n${JSON.stringify(sortedUser)}`;
+      console.log("Attempt 2:", attempt2);
+      sha256(attempt2).then(hash => console.log("Hash 2:", hash));
+      
+      // Attempt 3: All fields sorted
+      const allFields = { auth_date, query_id, ...user };
+      const sortedFields = Object.fromEntries(
+        Object.entries(allFields).sort(([a], [b]) => a.localeCompare(b))
+      );
+      const attempt3 = Object.entries(sortedFields).map(([k, v]) => `${k}=${v}`).join('\n');
+      console.log("Attempt 3:", attempt3);
+      sha256(attempt3).then(hash => console.log("Hash 3:", hash));
+      
+      // Attempt 4: URL-encoded parameters
+      const urlEncodedParams = new URLSearchParams({ auth_date, query_id, ...user }).toString();
+      const attempt4 = urlEncodedParams;
+      console.log("Attempt 4:", attempt4);
+      sha256(attempt4).then(hash => console.log("Hash 4:", hash));
+      
+      // Attempt 5: JSON stringified entire object
+      const attempt5 = JSON.stringify({ auth_date, query_id, user });
+      console.log("Attempt 5:", attempt5);
+      sha256(attempt5).then(hash => console.log("Hash 5:", hash));
+      
+      // Attempt 6: Concatenated string without newlines
+      const attempt6 = `auth_date=${auth_date}query_id=${query_id}${JSON.stringify(user)}`;
+      console.log("Attempt 6:", attempt6);
+      sha256(attempt6).then(hash => console.log("Hash 6:", hash));
+      
+      // Attempt 7: Only user object
+      const attempt7 = JSON.stringify(user);
+      console.log("Attempt 7:", attempt7);
+      sha256(attempt7).then(hash => console.log("Hash 7:", hash));
+      
+      // Attempt 8: Concatenated key-value pairs
+      const attempt8 = Object.entries({ auth_date, query_id, ...user })
+        .map(([k, v]) => `${k}=${v}`).join('');
+      console.log("Attempt 8:", attempt8);
+      sha256(attempt8).then(hash => console.log("Hash 8:", hash));
       const key = await crypto.subtle.importKey(
         "raw",
         secretKeyHash,
@@ -81,6 +130,7 @@ function App() {
         false,
         ["sign"]
       );
+
       const signature = await crypto.subtle.sign(
         "HMAC",
         key,
