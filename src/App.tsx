@@ -12,24 +12,16 @@ interface TelegramWebApp {
     buttons: Array<{ text: string; type: string }>;
   }) => void;
   initDataUnsafe: {
-    user?: TelegramUser;
+    user?: any;
   };
 }
 
 interface FullTelegramUser {
   query_id: string;
   auth_date: number;
-  user: TelegramUser;
+  user: any;
 }
 
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  hash: string;
-  language_code: string;
-}
 
 declare global {
   interface Window {
@@ -59,7 +51,8 @@ function App() {
       //console.log("otherData:", otherData);
       console.log("telegramAppData within verifyTelegramUser:", telegramAppData);
       const { user, auth_date, query_id } = telegramAppData!;
-      console.log("user:", user);
+      user.sort((a: any, b: any) => a.localeCompare(b));
+
       
       const encoder = new TextEncoder();
 
@@ -67,6 +60,7 @@ function App() {
         "SHA-256",
         encoder.encode(import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
       );
+
 
       const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\nuser=${JSON.stringify(user)}`;
       console.log("dataCheckString: ", dataCheckString);
@@ -87,6 +81,8 @@ function App() {
       const calculatedHash = Array.from(new Uint8Array(signature))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
+
+        console.log("calculatedHash: ", calculatedHash);
 
       const isValid = calculatedHash === user.hash;
  
