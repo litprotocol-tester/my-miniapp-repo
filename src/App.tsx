@@ -43,6 +43,8 @@ declare global {
 }
 
 function App() {
+  console.log("defined?", process.env.VITE_TELEGRAM_BOT_TOKEN);
+  console.log("defined?", import.meta.env.VITE_TELEGRAM_BOT_TOKEN);
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [user, setUser] = useState<TelegramUser | null>(null);
@@ -72,7 +74,6 @@ function App() {
         "SHA-256",
         encoder.encode(process.env.VITE_TELEGRAM_BOT_TOKEN)
       );
-      console.log("defined?", process.env.VITE_TELEGRAM_BOT_TOKEN);
       const key = await crypto.subtle.importKey(
         "raw",
         secretKeyHash,
