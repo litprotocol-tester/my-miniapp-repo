@@ -88,7 +88,10 @@ function App() {
         .join("");
 
       const isValid = calculatedHash === user.hash;
+      console.log("calculatedHash: ", calculatedHash);
+      console.log("user.hash: ", user.hash);
       const isRecent = Date.now() / 1000 - user.auth_date < 600;
+      console.log("isRecent: ", Date.now() / 1000 - user.auth_date);
 
       console.log(
         `ℹ️ User Telegram data is valid: ${isValid}. User data is recent: ${isRecent}`
