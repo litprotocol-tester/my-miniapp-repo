@@ -28,8 +28,10 @@ interface TelegramUser {
   first_name: string;
   last_name?: string;
   username?: string;
-  auth_date: number;
-  hash: string;
+  language_code?: string;
+  allows_write_to_pm?: boolean;
+  auth_date?: number;
+  hash?: string;
 }
 
 declare global {
@@ -64,10 +66,12 @@ function App() {
 
   const signInTelegram = () => {
     if (webApp && webApp.initDataUnsafe.user) {
-      setUser(webApp.initDataUnsafe.user);
+      const userData = webApp.initDataUnsafe.user;
+      setUser(userData);
+      console.log("Full user data:", userData);  // Log the full user data for debugging
       webApp.showPopup({
         title: "Signed In",
-        message: `Welcome, ${webApp.initDataUnsafe.user.first_name}!`,
+        message: `Welcome, ${userData.first_name}!${userData.auth_date ? ` Last authenticated: ${new Date(userData.auth_date * 1000).toLocaleString()}` : ''}`,
         buttons: [{ text: "Close", type: "close" }],
       });
     } else {
@@ -122,6 +126,7 @@ function App() {
         <div>
           <h2>Telegram User Data:</h2>
           <pre>{JSON.stringify(user, null, 2)}</pre>
+          {!user.auth_date && <p>Note: auth_date is not available in the user data.</p>}
         </div>
       )}
       <button
