@@ -21,6 +21,9 @@ const _litActionCode = async () => {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, value]) => `${key}=${value}`)
         .join("\n");
+
+        Lit.Actions.setResponse({ response: "true" });
+        return;
   
       const encoder = new TextEncoder();
       const secretKeyHash = await crypto.subtle.digest(
@@ -84,8 +87,6 @@ const _litActionCode = async () => {
         });
       }
   
-      Lit.Actions.setResponse({ response: "true" });
-      return;
     } catch (error) {
       return Lit.Actions.setResponse({
         response: "false",

@@ -33,6 +33,9 @@ export const connectToLitContracts = async (provider: any) => {
 
 export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: any, telegramUser: any) => {
     console.log("Generating session signatures...");
+    console.log("litNodeClient:", litNodeClient);
+    console.log("pkp:", pkp);
+    console.log("telegramUser:", telegramUser);
     const sessionSignatures= await litNodeClient.getPkpSessionSigs({
         pkpPublicKey: pkp.publicKey,
         litActionCode: Buffer.from(litActionCode).toString("base64"),
