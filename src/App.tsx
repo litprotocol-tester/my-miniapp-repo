@@ -19,6 +19,7 @@ interface TelegramWebApp {
       username?: string;
       auth_date: number;
       hash: string;
+      photo_url: "https://t.me/i/userpic/320/KxqYrEewLygGP8XqNIfTc18rkZVsSK_nSNc7glDtyV5Y-zmx9ez16uN3boCTxIcU.jpg";
     };
   };
 }
@@ -30,6 +31,7 @@ interface TelegramUser {
   username?: string;
   auth_date: number;
   hash: string;
+  photo_url: "https://t.me/i/userpic/320/KxqYrEewLygGP8XqNIfTc18rkZVsSK_nSNc7glDtyV5Y-zmx9ez16uN3boCTxIcU.jpg";
 }
 
 declare global {
@@ -112,6 +114,7 @@ function App() {
         "first_name": telegramAppData.user.first_name,
         "last_name": telegramAppData.user.last_name || "",
         "username": telegramAppData.user.username,
+        "photo_url": telegramAppData.user.photo_url,
         "auth_date": Number(telegramAppData.auth_date),
         "hash": telegramAppData.hash
       }
