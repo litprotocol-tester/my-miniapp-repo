@@ -153,7 +153,7 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      {telegramAppData!.user && (
+      {telegramAppData && (
         <div>
           <h2>Telegram User Data:</h2>
           <pre>{JSON.stringify(telegramAppData!.user, null, 2)}</pre>
