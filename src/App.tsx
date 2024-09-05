@@ -86,7 +86,7 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      <button style={{ padding: 10, margin: 10 }} onClick={connect} disabled={connected}>
+      <button style={{ padding: 10, margin: 10 }} onClick={connect} disabled={!provider}>
         {connected ? 'Connected' : 'Connect'}
       </button>
       {connected && (
