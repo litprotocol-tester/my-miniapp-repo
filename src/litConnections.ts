@@ -29,7 +29,9 @@ export const connectToLitContracts = async (provider: any, account: string) => {
     return litContracts;
 };
 
-export const getSessionSignatures = async (litNodeClient: LitNodeClient, ethersSigner: ethers.Signer) => {
+export const getSessionSignatures = async (litNodeClient: LitNodeClient, provider: any, account: string) => {
+    const ethersProvider = new ethers.providers.Web3Provider(provider as any);
+    const ethersSigner = ethersProvider.getSigner(account!);
     const sessionSignatures = await litNodeClient.getSessionSigs({
         chain: "ethereum",
         expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes

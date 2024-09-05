@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import litLogo from "./assets/lit.png";
 import { getSessionSignatures, connectToLitNodes, connectToLitContracts } from "./litConnections";
-import * as ethers from "ethers";
 import { useSDK } from "@metamask/sdk-react";
 import "./App.css";
 
@@ -27,7 +26,6 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<WebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  //const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -63,7 +61,8 @@ function App() {
     const litNodeClient = await connectToLitNodes();
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
-      signer as ethers.Signer
+      provider,
+      account!
     );
     setSessionSignatures(sessionSignatures);
   };
@@ -83,13 +82,12 @@ function App() {
       <button
         style={{ padding: 10, margin: 10 }}
         onClick={connect}
-        disabled={signer as any}
       >
         {connected ? "Connect" : "Connected"}
       </button>
       {connected && <div>{account && `Connected account: ${account}`}</div>}
       {connected && (
-        <button style={{ padding: 10, margin: 10 }} onClick={getSS} disabled={!signer}>
+        <button style={{ padding: 10, margin: 10 }} onClick={getSS}>
           Get Session Signatures
         </button>
       )}
@@ -100,7 +98,7 @@ function App() {
         </div>
       )}
       { connected && (
-        <button style={{ padding: 10, margin: 10 }} onClick={mintPkp} disabled={!signer}>
+        <button style={{ padding: 10, margin: 10 }} onClick={mintPkp}>
           Mint PKP
         </button>
       )}
