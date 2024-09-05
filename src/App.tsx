@@ -16,14 +16,18 @@ interface TelegramWebApp {
   };
 }
 
+interface FullTelegramUser {
+  query_id: string;
+  auth_date: number;
+  user: TelegramUser;
+}
+
 interface TelegramUser {
   id: number;
   first_name: string;
   last_name?: string;
   username?: string;
-  auth_date: number;
   hash: string;
-  query_id: string;
   language_code: string;
 }
 
@@ -39,6 +43,7 @@ function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
+  const [telegramAppData, setTelegramAppData] = useState<FullTelegramUser | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -55,17 +60,19 @@ function App() {
       console.log("🔄 Validating user Telegram info client side...");
       const { hash, ...otherData } = user;
       console.log("otherData:", otherData);
-
-      const dataCheckString = Object.entries(otherData)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, value]) => `${key}=${value}`)
-        .join("\n");
-
       const encoder = new TextEncoder();
+
       const secretKeyHash = await crypto.subtle.digest(
         "SHA-256",
         encoder.encode(import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
       );
+
+
+      const dataCheckString = Object.entries(telegramAppData!)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n");
+
       const key = await crypto.subtle.importKey(
         "raw",
         secretKeyHash,
@@ -86,8 +93,8 @@ function App() {
       const isValid = calculatedHash === user.hash;
       console.log("calculatedHash: ", calculatedHash);
       console.log("user.hash: ", user.hash);
-      const isRecent = Date.now() / 1000 - user.auth_date < 600;
-      console.log("isRecent: ", Date.now() / 1000 - user.auth_date);
+      const isRecent = Date.now() / 1000 - telegramAppData!.auth_date < 600;
+      console.log("isRecent: ", Date.now() / 1000 - telegramAppData!.auth_date);
 
       console.log(
         `ℹ️ User Telegram data is valid: ${isValid}. User data is recent: ${isRecent}`
@@ -108,11 +115,11 @@ function App() {
         "first_name": telegramAppData.user.first_name,
         "last_name": telegramAppData.user.last_name || "",
         "username": telegramAppData.user.username,
-        "auth_date": Number(telegramAppData.auth_date),
-        "hash": telegramAppData.hash,
-        "query_id": telegramAppData.query_id,
-        "language_code": telegramAppData.user.language_code
+        "language_code": telegramAppData.user.language_code,
+        "hash": telegramAppData.user.hash,
       }
+      const fullUserObject : FullTelegramUser = telegramAppData;
+      setTelegramAppData(fullUserObject);
       setTelegramUser(userObject);
       setWebApp(telegramApp);
       telegramApp.expand();
