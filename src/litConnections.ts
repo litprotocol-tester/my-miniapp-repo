@@ -1,5 +1,5 @@
 import { LitNodeClient } from '@lit-protocol/lit-node-client';
-import { LitNetwork } from '@lit-protocol/constants';
+import { LitNetwork, AuthMethodScope } from '@lit-protocol/constants';
 import { LitContracts } from '@lit-protocol/contracts-sdk';
 import { litActionCode } from "./litAction";
 import * as ethers from 'ethers';
@@ -28,6 +28,11 @@ export const connectToLitContracts = async (provider: any) => {
     });
     await litContracts.connect();
     const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
+    litContracts.addPermittedAction({
+        authMethodScopes: [AuthMethodScope.SignAnything],
+        pkpTokenId: pkp.tokenId,
+        ipfsId: "QmZfSBkbYZNFmX6yY3yFLiZUVb2DXutxJoq52aXHFBo3do"
+    })
     return pkp;
 };
 
