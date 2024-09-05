@@ -12,15 +12,7 @@ interface TelegramWebApp {
     buttons: Array<{ text: string; type: string }>;
   }) => void;
   initDataUnsafe: {
-    user?: {
-      id: number;
-      first_name: string;
-      last_name?: string;
-      username?: string;
-      auth_date: number;
-      hash: string;
-      photo_url: string;
-    };
+    user?: TelegramUser;
   };
 }
 
@@ -31,7 +23,6 @@ interface TelegramUser {
   username?: string;
   auth_date: number;
   hash: string;
-  photo_url: string;
 }
 
 declare global {
@@ -45,7 +36,7 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -61,6 +52,7 @@ function App() {
     ): Promise<{ isValid: boolean; isRecent: boolean }> => {
       console.log("🔄 Validating user Telegram info client side...");
       const { hash, ...otherData } = user;
+      console.log("userdata:",user);
 
       const dataCheckString = Object.entries(otherData)
         .sort(([a], [b]) => a.localeCompare(b))
@@ -114,12 +106,11 @@ function App() {
         "first_name": telegramAppData.user.first_name,
         "last_name": telegramAppData.user.last_name || "",
         "username": telegramAppData.user.username,
-        "photo_url": "https://t.me/i/userpic/320/KxqYrEewLygGP8XqNIfTc18rkZVsSK_nSNc7glDtyV5Y-zmx9ez16uN3boCTxIcU.jpg",
         "auth_date": Number(telegramAppData.auth_date),
         "hash": telegramAppData.hash
       }
       console.log("user object: ", userObject);
-      setUser(userObject);
+      setTelegramUser(userObject);
       setWebApp(telegramApp);
       telegramApp.expand();
 
@@ -151,7 +142,7 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       pkp,
-      user
+      telegramUser
     );
     setSessionSignatures(sessionSignatures);
   };
@@ -167,10 +158,10 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      {user && (
+      {telegramUser && (
         <div>
           <h2>Telegram User Data:</h2>
-          <pre>{JSON.stringify(user, null, 2)}</pre>
+          <pre>{JSON.stringify(telegramUser, null, 2)}</pre>
           <p>User verification status: {isUserVerified === null ? "Pending" : isUserVerified ? "Verified" : "Not Verified"}</p>
         </div>
       )}
