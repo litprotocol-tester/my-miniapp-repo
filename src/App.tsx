@@ -23,7 +23,7 @@ interface TelegramUser {
   username?: string;
   auth_date: number;
   hash: string;
-  queryId: string;
+  query_id: string;
   language_code: string;
 }
 
@@ -110,8 +110,8 @@ function App() {
         "username": telegramAppData.user.username,
         "auth_date": Number(telegramAppData.auth_date),
         "hash": telegramAppData.hash,
-        "queryId": telegramAppData.queryId,
-        "language_code": telegramAppData.language_code
+        "query_id": telegramAppData.query_id,
+        "language_code": telegramAppData.user.language_code
       }
       setTelegramUser(userObject);
       setWebApp(telegramApp);
