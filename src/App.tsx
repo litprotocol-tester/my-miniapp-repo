@@ -5,27 +5,47 @@ import { useSDK } from "@metamask/sdk-react";
 import "./App.css";
 
 // Define the WebApp interface
-interface WebApp {
+interface TelegramWebApp {
   ready: () => void;
   showPopup: (params: {
     title?: string;
     message: string;
     buttons: Array<{ text: string; type: string }>;
   }) => void;
+  initDataUnsafe: {
+    user?: {
+      id: number;
+      first_name: string;
+      last_name?: string;
+      username?: string;
+      auth_date: number;
+      hash: string;
+    };
+  };
+}
+
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  auth_date: number;
+  hash: string;
 }
 
 // Extend the Window interface
 declare global {
   interface Window {
-    Telegram: {
-      WebApp: WebApp;
+    Telegram?: {
+      WebApp?: TelegramWebApp;
     };
   }
 }
 
 function App() {
-  const [webApp, setWebApp] = useState<WebApp | null>(null);
+  const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
+  const [user, setUser] = useState<TelegramUser | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -35,11 +55,27 @@ function App() {
   const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
 
   useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      setWebApp(window.Telegram.WebApp);
-      window.Telegram.WebApp.ready();
+    const tgApp = window.Telegram?.WebApp;
+    if (tgApp) {
+      tgApp.ready();
+      setWebApp(tgApp);
+      setUser(tgApp.initDataUnsafe.user || null);
+      console.log(user);
     }
   }, []);
+
+  const signInTelegram = () => {
+    if (webApp && webApp.initDataUnsafe.user) {
+      setUser(webApp.initDataUnsafe.user);
+      webApp.showPopup({
+        title: "Signed In",
+        message: `Welcome, ${webApp.initDataUnsafe.user.first_name}!`,
+        buttons: [{ text: "Close", type: "close" }],
+      });
+    } else {
+      console.error("WebApp or user data not available");
+    }
+  };
 
   const connect = async () => {
     try {
@@ -79,9 +115,21 @@ function App() {
       </header>
       <button
         style={{ padding: 10, margin: 10 }}
+        onClick={signInTelegram}
+      >
+        Sign In with Telegram
+      </button>
+      {user && (
+        <div>
+          <h2>Telegram User Data:</h2>
+          <pre>{JSON.stringify(user, null, 2)}</pre>
+        </div>
+      )}
+      <button
+        style={{ padding: 10, margin: 10 }}
         onClick={connect}
       >
-        {connected ? "Connect" : "Connected"}
+        {connected ? "Connect to MetaMask" : "Connected"}
       </button>
       {connected && <div>{account && `Connected account: ${account}`}</div>}
       {connected && (
@@ -95,12 +143,12 @@ function App() {
           <pre>{JSON.stringify(sessionSignatures, null, 2)}</pre>
         </div>
       )}
-      { connected && (
+      {connected && (
         <button style={{ padding: 10, margin: 10 }} onClick={mintPkp}>
           Mint PKP
         </button>
       )}
-      { pkp && (
+      {pkp && (
         <div>
           <h2>PKP:</h2>
           <pre>{JSON.stringify(pkp, null, 2)}</pre>
@@ -109,5 +157,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
