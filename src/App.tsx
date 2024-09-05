@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import litLogo from './assets/lit.png';
-//import { connectToLitNodes, connectToLitContracts } from './litConnections';
+import { connectToLitNodes, connectToLitContracts } from './litConnections';
 //import * as ethers from 'ethers';
+import { LitContracts } from '@lit-protocol/contracts-sdk';
+import { LitNodeClient } from '@lit-protocol/lit-node-client';
 import { useSDK } from '@metamask/sdk-react';
 import './App.css';
 
@@ -27,7 +29,14 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<WebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const { sdk, connected, /*connecting, provider,*/ chainId } = useSDK();
+  const [litContracts, setLitContracts] = useState<LitContracts | null>(null);
+  const [litNodeClient, setLitNodeClient] = useState<LitNodeClient | null>(null);
+  const [pkp, setPkp] = useState<{
+    tokenId: any
+    publicKey: string
+    ethAddress: string
+  } | null>(null);
+  const { sdk, connected, /*connecting, provider, chainId */ } = useSDK();
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -50,9 +59,10 @@ function App() {
           ]
         });
 
-        // Your Lit protocol connections can go here
-        // const litNodeClient = connectToLitNodes();
-        // const litContracts = connectToLitContracts();
+        const litNodeClient = await connectToLitNodes();
+        setLitNodeClient(litNodeClient);
+        const litContracts = await connectToLitContracts();
+        setLitContracts(litContracts);
       }
     } catch (err) {
       console.warn("failed to connect..", err);
@@ -69,6 +79,16 @@ function App() {
     }
   };
 
+  const mintPkp = async() => {
+    try{
+      const pkp = (await litContracts!.pkpNftContractUtils.write.mint()).pkp;
+      setPkp(pkp);
+    }
+    catch (err) {
+      console.warn("failed to mint PKP..", err);
+    }
+  }
+
   return (
     <div className="App">
         <header className="App-header">
@@ -81,11 +101,17 @@ function App() {
       {connected && (
         <div>
           <>
-            {chainId && `Connected chain: ${chainId}`}
-            <p></p>
             {account && `Connected account: ${account}`}
           </>
         </div>
+      )}
+      {connected && litContracts && litNodeClient && (
+        <button style={{ padding: 10, margin: 10 }} onClick={mintPkp}>
+          Mint PKP
+        </button>
+      )}
+      {pkp && (
+        <div> PKP: {`${pkp}`} </div>
       )}
     </div>
   );
