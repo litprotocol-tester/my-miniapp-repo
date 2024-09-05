@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lit-protocol/contracts-sdk": "^6.4.10",
+    "@lit-protocol/lit-node-client": "^6.4.10",
+    "@metamask/sdk-react": "^0.28.0",
     "@twa-dev/sdk": "^7.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
