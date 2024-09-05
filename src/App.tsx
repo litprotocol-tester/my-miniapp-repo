@@ -77,12 +77,31 @@ function App() {
   const mintPkp = async() => {
     try {
       const litContracts = await connectToLitContracts();
-      //setLitContracts(litContracts);
       const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
       setPkp(pkp);
+      if (webApp) {
+        webApp.showPopup({
+          title: 'PKP Success',
+          message: 'Should have minted PKP',
+          buttons: [
+            {text: 'Close', type: 'close'},
+          ]
+        });
+      }
+
+
     }
     catch (err) {
       console.warn("failed to mint PKP..", err);
+    }
+    if (webApp) {
+      webApp.showPopup({
+        title: 'Error',
+        message: 'Failed to mint PKP',
+        buttons: [
+          {text: 'Close', type: 'close'},
+        ]
+      });
     }
   }
 
@@ -108,7 +127,7 @@ function App() {
         </button>
       )}
       {pkp && (
-        <div> PKP: {`${pkp}`} </div>
+        <div> PKP Public Key: {`${pkp.publicKey}`} </div>
       )}
     </div>
   );
