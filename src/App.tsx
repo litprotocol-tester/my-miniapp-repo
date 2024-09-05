@@ -4,7 +4,6 @@ import { getSessionSignatures, connectToLitNodes, connectToLitContracts } from "
 import { useSDK } from "@metamask/sdk-react";
 import "./App.css";
 
-// Define the WebApp interface
 interface TelegramWebApp {
   ready: () => void;
   showPopup: (params: {
@@ -33,7 +32,6 @@ interface TelegramUser {
   hash: string;
 }
 
-// Extend the Window interface
 declare global {
   interface Window {
     Telegram?: {
@@ -97,7 +95,8 @@ function App() {
     const litNodeClient = await connectToLitNodes();
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
-      provider,
+      pkp,
+      user
     );
     setSessionSignatures(sessionSignatures);
   };
