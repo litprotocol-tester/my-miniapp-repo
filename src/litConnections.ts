@@ -18,9 +18,10 @@ export const connectToLitNodes = async () => {
     return litNodeClient;
 };
 
-export const connectToLitContracts = async (provider: any, account: string) => {
+export const connectToLitContracts = async (provider: any) => {
     const ethersProvider = new ethers.providers.Web3Provider(provider as any);
-    const newSigner = ethersProvider.getSigner(account!);
+    await provider.send("eth_requestAccounts", []);
+    const newSigner = ethersProvider.getSigner();
     const litContracts = new LitContracts({
         signer: newSigner,
         network: LitNetwork.DatilDev,
@@ -29,9 +30,10 @@ export const connectToLitContracts = async (provider: any, account: string) => {
     return litContracts;
 };
 
-export const getSessionSignatures = async (litNodeClient: LitNodeClient, provider: any, account: string) => {
+export const getSessionSignatures = async (litNodeClient: LitNodeClient, provider: any) => {
     const ethersProvider = new ethers.providers.Web3Provider(provider as any);
-    const ethersSigner = ethersProvider.getSigner(account!);
+    await provider.send("eth_requestAccounts", []);
+    const ethersSigner = ethersProvider.getSigner();
     const sessionSignatures = await litNodeClient.getSessionSigs({
         chain: "ethereum",
         expiration: new Date(Date.now() + 1000 * 60 * 10).toISOString(), // 10 minutes

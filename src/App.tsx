@@ -62,13 +62,12 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       provider,
-      account!
     );
     setSessionSignatures(sessionSignatures);
   };
 
   const mintPkp = async () => {
-    const litContracts = await connectToLitContracts(provider, account!);
+    const litContracts = await connectToLitContracts(provider);
     const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
     setPkp(pkp);
   }
