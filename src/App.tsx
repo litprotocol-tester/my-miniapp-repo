@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import litLogo from "./assets/lit.png";
 import { getSessionSignatures, connectToLitNodes, connectToLitContracts } from "./litConnections";
 import { useSDK } from "@metamask/sdk-react";
@@ -28,10 +28,8 @@ interface TelegramUser {
   first_name: string;
   last_name?: string;
   username?: string;
-  language_code?: string;
-  allows_write_to_pm?: boolean;
-  auth_date?: number;
-  hash?: string;
+  auth_date: number;
+  hash: string;
 }
 
 declare global {
@@ -52,32 +50,79 @@ function App() {
     ethAddress: string
   } | null>(null);
   const [sessionSignatures, setSessionSignatures] = useState<any | null>(null);
-  const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
+  const [isUserVerified, setIsUserVerified] = useState<boolean | null>(null);
+  const { sdk, connected, provider } = useSDK();
+
+  const verifyTelegramUser = useCallback(
+    async (
+      user: TelegramUser
+    ): Promise<{ isValid: boolean; isRecent: boolean }> => {
+      console.log("🔄 Validating user Telegram info client side...");
+      const { hash, ...otherData } = user;
+
+      const dataCheckString = Object.entries(otherData)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n");
+
+      const encoder = new TextEncoder();
+      const secretKeyHash = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(process.env.VITE_TELEGRAM_BOT_TOKEN)
+      );
+      const key = await crypto.subtle.importKey(
+        "raw",
+        secretKeyHash,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const signature = await crypto.subtle.sign(
+        "HMAC",
+        key,
+        encoder.encode(dataCheckString)
+      );
+
+      const calculatedHash = Array.from(new Uint8Array(signature))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      const isValid = calculatedHash === user.hash;
+      const isRecent = Date.now() / 1000 - user.auth_date < 600;
+
+      console.log(
+        `ℹ️ User Telegram data is valid: ${isValid}. User data is recent: ${isRecent}`
+      );
+
+      return { isValid, isRecent };
+    },
+    [process.env.VITE_TELEGRAM_BOT_TOKEN]
+  );
 
   useEffect(() => {
-    const tgApp = window.Telegram?.WebApp;
-    if (tgApp) {
-      tgApp.ready();
-      setWebApp(tgApp);
-      setUser(tgApp.initDataUnsafe.user || null);
-      console.log(user);
-    }
-  }, []);
+    if ((window as any).Telegram) {
+      const telegramApp = (window as any).Telegram?.WebApp;
+      const telegramAppData = telegramApp.initDataUnsafe;
+      console.log("telegramAppData: ", telegramAppData)
+      const userObject : TelegramUser = {
+        "id": Number(telegramAppData.user.id),
+        "first_name": telegramAppData.user.first_name,
+        "last_name": telegramAppData.user.last_name || "",
+        "username": telegramAppData.user.username,
+        "auth_date": Number(telegramAppData.auth_date),
+        "hash": telegramAppData.hash
+      }
+      console.log("user object: ", userObject);
+      setUser(userObject);
+      setWebApp(telegramApp);
+      telegramApp.expand();
 
-  const signInTelegram = () => {
-    if (webApp && webApp.initDataUnsafe.user) {
-      const userData = webApp.initDataUnsafe.user;
-      setUser(userData);
-      console.log("Full user data:", userData);  // Log the full user data for debugging
-      webApp.showPopup({
-        title: "Signed In",
-        message: `Welcome, ${userData.first_name}!${userData.auth_date ? ` Last authenticated: ${new Date(userData.auth_date * 1000).toLocaleString()}` : ''}`,
-        buttons: [{ text: "Close", type: "close" }],
+      // Verify the user
+      verifyTelegramUser(userObject).then(({ isValid, isRecent }) => {
+        setIsUserVerified(isValid && isRecent);
       });
-    } else {
-      console.error("WebApp or user data not available");
     }
-  };
+  }, [verifyTelegramUser]);
 
   const connect = async () => {
     try {
@@ -100,7 +145,7 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       pkp,
-      user,
+      user
     );
     setSessionSignatures(sessionSignatures);
   };
@@ -116,24 +161,18 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      <button
-        style={{ padding: 10, margin: 10 }}
-        onClick={signInTelegram}
-      >
-        Sign In with Telegram
-      </button>
       {user && (
         <div>
           <h2>Telegram User Data:</h2>
           <pre>{JSON.stringify(user, null, 2)}</pre>
-          {!user.auth_date && <p>Note: auth_date is not available in the user data.</p>}
+          <p>User verification status: {isUserVerified === null ? "Pending" : isUserVerified ? "Verified" : "Not Verified"}</p>
         </div>
       )}
       <button
         style={{ padding: 10, margin: 10 }}
         onClick={connect}
       >
-        {connected ? "Connect to MetaMask" : "Connected"}
+        {connected ? "Connected" : "Connect to MetaMask"}
       </button>
       {connected && <div>{account && `Connected account: ${account}`}</div>}
       {connected && (
@@ -161,4 +200,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
