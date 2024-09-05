@@ -72,6 +72,7 @@ function App() {
         "SHA-256",
         encoder.encode(process.env.VITE_TELEGRAM_BOT_TOKEN)
       );
+      console.log("defined?", process.env.VITE_TELEGRAM_BOT_TOKEN);
       const key = await crypto.subtle.importKey(
         "raw",
         secretKeyHash,
