@@ -2,6 +2,7 @@ import { LitNodeClient } from '@lit-protocol/lit-node-client';
 import { LitNetwork, AuthMethodScope } from '@lit-protocol/constants';
 import { LitContracts } from '@lit-protocol/contracts-sdk';
 import { litActionCode } from "./litAction";
+import Hash from "typestub-ipfs-only-hash";
 import * as ethers from 'ethers';
 import {
     LitAbility,
@@ -27,12 +28,16 @@ export const connectToLitContracts = async (provider: any) => {
         network: LitNetwork.DatilDev,
     });
     await litContracts.connect();
+    console.log(litActionCode);
+    const hash = await Hash.of(litActionCode);
+    console.log("hash:", await Hash.of(litActionCode));
     const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
-    litContracts.addPermittedAction({
+    const permitted = await litContracts.addPermittedAction({
         authMethodScopes: [AuthMethodScope.SignAnything],
         pkpTokenId: pkp.tokenId,
-        ipfsId: "QmZfSBkbYZNFmX6yY3yFLiZUVb2DXutxJoq52aXHFBo3do"
-    })
+        ipfsId: hash
+    });
+    console.log(permitted);
     return pkp;
 };
 
@@ -48,6 +53,7 @@ export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: an
             telegramUserData: JSON.stringify(telegramUser),
             telegramBotSecret: process.env.VITE_TELEGRAM_BOT_TOKEN,
             pkpTokenId: pkp.tokenId,
+            magicNumber: 42,
           },
           resourceAbilityRequests: [
             {
