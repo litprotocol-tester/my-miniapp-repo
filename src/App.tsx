@@ -58,7 +58,12 @@ function App() {
       const { user, auth_date, query_id } = telegramAppData;
       
       // Create a sorted array of key-value pairs from the user object
-      const sortedUserEntries = Object.entries(user).sort(([a], [b]) => a.localeCompare(b));
+      const sortedUser = Object.keys(user)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = user[key];
+        return acc;
+      }, {} as typeof user);
       
       const encoder = new TextEncoder();
 
@@ -68,7 +73,7 @@ function App() {
       );
 
       // Construct the dataCheckString using the sorted user entries
-      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${sortedUserEntries}`;
+      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${sortedUser}`;
       console.log("dataCheckString: ", dataCheckString);
 
       const key = await crypto.subtle.importKey(
