@@ -53,11 +53,13 @@ function App() {
   const { sdk, connected, provider } = useSDK();
 
   const verifyTelegramUser = useCallback(
-    async (): Promise<{ isValid: boolean; isRecent: boolean }> => {
+    async (telegramAppData: FullTelegramUser | null): Promise<{ isValid: boolean; isRecent: boolean }> => {
       console.log("🔄 Validating user Telegram info client side...");
       //const { hash, ...otherData } = user;
       //console.log("otherData:", otherData);
+      console.log("telegramAppData within verifyTelegramUser:", telegramAppData);
       const { user, auth_date, query_id } = telegramAppData!;
+      console.log("user:", user);
       
       const encoder = new TextEncoder();
 
@@ -110,7 +112,7 @@ function App() {
       telegramApp.expand();
 
       // Verify the user
-      verifyTelegramUser().then(({ isValid, isRecent }) => {
+      verifyTelegramUser(telegramAppData).then(({ isValid, isRecent }) => {
         setIsUserVerified(isValid && isRecent);
       });
     }
