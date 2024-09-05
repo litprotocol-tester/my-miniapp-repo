@@ -70,7 +70,7 @@ function App() {
         Object.entries(user).sort(([a], [b]) => a.localeCompare(b))
       );
 
-      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${sortedUser}`;
+      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${JSON.stringify(sortedUser)}`;
       console.log("dataCheckString: ", dataCheckString);
       console.log("dataCheckString: ", dataCheckString);
 
