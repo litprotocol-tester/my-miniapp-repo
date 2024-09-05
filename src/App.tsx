@@ -42,7 +42,6 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
   const [telegramAppData, setTelegramAppData] = useState<FullTelegramUser | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
@@ -54,12 +53,12 @@ function App() {
   const { sdk, connected, provider } = useSDK();
 
   const verifyTelegramUser = useCallback(
-    async (
-      user: TelegramUser
-    ): Promise<{ isValid: boolean; isRecent: boolean }> => {
+    async (): Promise<{ isValid: boolean; isRecent: boolean }> => {
       console.log("🔄 Validating user Telegram info client side...");
-      const { hash, ...otherData } = user;
-      console.log("otherData:", otherData);
+      //const { hash, ...otherData } = user;
+      //console.log("otherData:", otherData);
+      const { user, auth_date, query_id } = telegramAppData!;
+      
       const encoder = new TextEncoder();
 
       const secretKeyHash = await crypto.subtle.digest(
@@ -67,11 +66,8 @@ function App() {
         encoder.encode(import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
       );
 
-
-      const dataCheckString = Object.entries(telegramAppData!)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, value]) => `${key}=${value}`)
-        .join("\n");
+      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\nuser=${JSON.stringify(user)}`;
+      console.log("dataCheckString: ", dataCheckString);
 
       const key = await crypto.subtle.importKey(
         "raw",
@@ -91,8 +87,7 @@ function App() {
         .join("");
 
       const isValid = calculatedHash === user.hash;
-      console.log("calculatedHash: ", calculatedHash);
-      console.log("user.hash: ", user.hash);
+ 
       const isRecent = Date.now() / 1000 - telegramAppData!.auth_date < 600;
       console.log("isRecent: ", Date.now() / 1000 - telegramAppData!.auth_date);
 
@@ -110,22 +105,12 @@ function App() {
       const telegramApp = (window as any).Telegram?.WebApp;
       const telegramAppData = telegramApp.initDataUnsafe;
       console.log("telegramAppData: ", telegramAppData)
-      const userObject : TelegramUser = {
-        "id": Number(telegramAppData.user.id),
-        "first_name": telegramAppData.user.first_name,
-        "last_name": telegramAppData.user.last_name || "",
-        "username": telegramAppData.user.username,
-        "language_code": telegramAppData.user.language_code,
-        "hash": telegramAppData.user.hash,
-      }
-      const fullUserObject : FullTelegramUser = telegramAppData;
-      setTelegramAppData(fullUserObject);
-      setTelegramUser(userObject);
+      setTelegramAppData(telegramAppData);
       setWebApp(telegramApp);
       telegramApp.expand();
 
       // Verify the user
-      verifyTelegramUser(userObject).then(({ isValid, isRecent }) => {
+      verifyTelegramUser().then(({ isValid, isRecent }) => {
         setIsUserVerified(isValid && isRecent);
       });
     }
@@ -152,7 +137,7 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       pkp,
-      telegramUser
+      telegramAppData!.user
     );
     setSessionSignatures(sessionSignatures);
   };
@@ -168,10 +153,10 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      {telegramUser && (
+      {telegramAppData!.user && (
         <div>
           <h2>Telegram User Data:</h2>
-          <pre>{JSON.stringify(telegramUser, null, 2)}</pre>
+          <pre>{JSON.stringify(telegramAppData!.user, null, 2)}</pre>
           <p>User verification status: {isUserVerified === null ? "Pending" : isUserVerified ? "Verified" : "Not Verified"}</p>
         </div>
       )}
