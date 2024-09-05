@@ -13,6 +13,8 @@ interface TelegramWebApp {
   }) => void;
   initDataUnsafe: {
     user?: any;
+    query_id?: string;
+    auth_date?: number;
   };
 }
 
@@ -21,7 +23,6 @@ interface FullTelegramUser {
   auth_date: number;
   user: any;
 }
-
 
 declare global {
   interface Window {
@@ -47,12 +48,17 @@ function App() {
   const verifyTelegramUser = useCallback(
     async (telegramAppData: FullTelegramUser | null): Promise<{ isValid: boolean; isRecent: boolean }> => {
       console.log("🔄 Validating user Telegram info client side...");
-      //const { hash, ...otherData } = user;
-      //console.log("otherData:", otherData);
       console.log("telegramAppData within verifyTelegramUser:", telegramAppData);
-      const { user, auth_date, query_id } = telegramAppData!;
-      user.sort((a: any, b: any) => a.localeCompare(b));
+      
+      if (!telegramAppData) {
+        console.error("No Telegram app data available");
+        return { isValid: false, isRecent: false };
+      }
 
+      const { user, auth_date, query_id } = telegramAppData;
+      
+      // Create a sorted array of key-value pairs from the user object
+      const sortedUserEntries = Object.entries(user).sort(([a], [b]) => a.localeCompare(b));
       
       const encoder = new TextEncoder();
 
@@ -61,8 +67,9 @@ function App() {
         encoder.encode(import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
       );
 
-
-      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\nuser=${JSON.stringify(user)}`;
+      // Construct the dataCheckString using the sorted user entries
+      const userString = sortedUserEntries.map(([key, value]) => `${key}=${value}`).join('\n');
+      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${userString}`;
       console.log("dataCheckString: ", dataCheckString);
 
       const key = await crypto.subtle.importKey(
@@ -82,12 +89,12 @@ function App() {
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
 
-        console.log("calculatedHash: ", calculatedHash);
+      console.log("calculatedHash: ", calculatedHash);
 
       const isValid = calculatedHash === user.hash;
  
-      const isRecent = Date.now() / 1000 - telegramAppData!.auth_date < 600;
-      console.log("isRecent: ", Date.now() / 1000 - telegramAppData!.auth_date);
+      const isRecent = Date.now() / 1000 - auth_date < 600;
+      console.log("isRecent: ", Date.now() / 1000 - auth_date);
 
       console.log(
         `ℹ️ User Telegram data is valid: ${isValid}. User data is recent: ${isRecent}`
