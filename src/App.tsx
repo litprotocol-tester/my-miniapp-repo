@@ -19,7 +19,6 @@ interface TelegramWebApp {
       username?: string;
       auth_date: number;
       hash: string;
-      photo_url: string;
     };
   };
 }
@@ -31,7 +30,6 @@ interface TelegramUser {
   username?: string;
   auth_date: number;
   hash: string;
-  photo_url: string;
 }
 
 declare global {
@@ -114,7 +112,6 @@ function App() {
         "first_name": telegramAppData.user.first_name,
         "last_name": telegramAppData.user.last_name || "",
         "username": telegramAppData.user.username,
-        "photo_url": telegramAppData.user.photo_url,
         "auth_date": Number(telegramAppData.auth_date),
         "hash": telegramAppData.hash
       }
