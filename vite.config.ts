@@ -1,8 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
-import rollupNodePolyFill from 'rollup-plugin-polyfill-node';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
@@ -18,7 +15,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Remove the buffer alias
+      // Add any aliases you need here
     },
   },
   optimizeDeps: {
@@ -26,20 +23,11 @@ export default defineConfig({
       define: {
         global: 'globalThis',
       },
-      plugins: [
-        NodeGlobalsPolyfillPlugin({
-          buffer: true,
-          process: true
-        }),
-        NodeModulesPolyfillPlugin(),
-      ],
     },
   },
   build: {
     rollupOptions: {
-      plugins: [
-        rollupNodePolyFill(),
-      ],
+      // Add any Rollup options you need here
     },
   },
 });
