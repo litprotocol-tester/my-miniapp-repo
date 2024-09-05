@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import litLogo from './assets/lit.png';
-import { connectToLitNodes, connectToLitContracts } from './litConnections';
+import { connectToLitContracts } from './litConnections';
 //import * as ethers from 'ethers';
-import { LitContracts } from '@lit-protocol/contracts-sdk';
-import { LitNodeClient } from '@lit-protocol/lit-node-client';
+//import { LitContracts } from '@lit-protocol/contracts-sdk';
+//import { LitNodeClient } from '@lit-protocol/lit-node-client';
 import { useSDK } from '@metamask/sdk-react';
 import './App.css';
 
@@ -29,8 +29,7 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<WebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [litContracts, setLitContracts] = useState<LitContracts | null>(null);
-  const [litNodeClient, setLitNodeClient] = useState<LitNodeClient | null>(null);
+  //const [litContracts, setLitContracts] = useState<LitContracts | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -59,10 +58,6 @@ function App() {
           ]
         });
 
-        const litNodeClient = await connectToLitNodes();
-        setLitNodeClient(litNodeClient);
-        const litContracts = await connectToLitContracts();
-        setLitContracts(litContracts);
       }
     } catch (err) {
       console.warn("failed to connect..", err);
@@ -80,8 +75,10 @@ function App() {
   };
 
   const mintPkp = async() => {
-    try{
-      const pkp = (await litContracts!.pkpNftContractUtils.write.mint()).pkp;
+    try {
+      const litContracts = await connectToLitContracts();
+      //setLitContracts(litContracts);
+      const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
       setPkp(pkp);
     }
     catch (err) {
@@ -105,7 +102,7 @@ function App() {
           </>
         </div>
       )}
-      {connected && litContracts && litNodeClient && (
+      {connected && (
         <button style={{ padding: 10, margin: 10 }} onClick={mintPkp}>
           Mint PKP
         </button>
