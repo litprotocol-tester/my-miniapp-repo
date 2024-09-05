@@ -67,8 +67,7 @@ function App() {
   };
 
   const mintPkp = async () => {
-    const litContracts = await connectToLitContracts(provider);
-    const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
+    const pkp = await connectToLitContracts(provider);
     setPkp(pkp);
   }
 

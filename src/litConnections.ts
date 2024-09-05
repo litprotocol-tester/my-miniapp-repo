@@ -27,7 +27,8 @@ export const connectToLitContracts = async (provider: any) => {
         network: LitNetwork.DatilDev,
     });
     await litContracts.connect();
-    return litContracts;
+    const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
+    return pkp;
 };
 
 export const getSessionSignatures = async (litNodeClient: LitNodeClient, provider: any) => {
