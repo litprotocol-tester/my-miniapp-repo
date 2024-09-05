@@ -68,8 +68,7 @@ function App() {
       );
 
       // Construct the dataCheckString using the sorted user entries
-      const userString = sortedUserEntries.map(([key, value]) => `${key}=${value}`).join('\n');
-      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${userString}`;
+      const dataCheckString = `auth_date=${auth_date}\nquery_id=${query_id}\n${sortedUserEntries}`;
       console.log("dataCheckString: ", dataCheckString);
 
       const key = await crypto.subtle.importKey(
