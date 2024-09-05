@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import litLogo from './assets/lit.png';
-import { connectToLitContracts } from './litConnections';
-//import * as ethers from 'ethers';
-//import { LitContracts } from '@lit-protocol/contracts-sdk';
-//import { LitNodeClient } from '@lit-protocol/lit-node-client';
+import { getSessionSignatures, connectToLitNodes} from './litConnections';
+import * as ethers from 'ethers';
 import { useSDK } from '@metamask/sdk-react';
 import './App.css';
 
@@ -29,13 +27,9 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<WebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  //const [litContracts, setLitContracts] = useState<LitContracts | null>(null);
-  const [pkp, setPkp] = useState<{
-    tokenId: any
-    publicKey: string
-    ethAddress: string
-  } | null>(null);
-  const { sdk, connected, /*connecting, provider, chainId */ } = useSDK();
+  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  const [sessionSignatures, setSessionSignatures] = useState<any | null>(null);
+  const { sdk, connected, /*connecting, */ provider, /*chainId*/  } = useSDK();
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -48,6 +42,12 @@ function App() {
     try {
       const accounts = await sdk?.connect();
       setAccount(accounts?.[0]);
+
+      if (provider && account) {
+        const ethersProvider = new ethers.providers.Web3Provider(provider as any);
+        const newSigner = ethersProvider.getSigner(account);
+        setSigner(newSigner);
+      }
 
       if (accounts?.[0] && webApp) {
         webApp.showPopup({
@@ -74,60 +74,36 @@ function App() {
     }
   };
 
-  const mintPkp = async() => {
-    try {
-      const litContracts = await connectToLitContracts();
-      const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
-      setPkp(pkp);
-      if (webApp) {
-        webApp.showPopup({
-          title: 'PKP Success',
-          message: 'Should have minted PKP',
-          buttons: [
-            {text: 'Close', type: 'close'},
-          ]
-        });
-      }
-
-
-    }
-    catch (err) {
-      console.warn("failed to mint PKP..", err);
-    }
-    if (webApp) {
-      webApp.showPopup({
-        title: 'Error',
-        message: 'Failed to mint PKP',
-        buttons: [
-          {text: 'Close', type: 'close'},
-        ]
-      });
-    }
-  }
+  const getSS= async () => {
+    const litNodeClient = await connectToLitNodes();
+    const sessionSignatures = await getSessionSignatures(litNodeClient, signer as ethers.Signer);
+    setSessionSignatures(sessionSignatures)
+  };
 
   return (
     <div className="App">
-        <header className="App-header">
+      <header className="App-header">
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
-        </header>
-      <button style={{ padding: 10, margin: 10 }} onClick={connect}>
-        Connect
+      </header>
+      <button style={{ padding: 10, margin: 10 }} onClick={connect} disabled={connected}>
+        {connected ? 'Connected' : 'Connect'}
       </button>
       {connected && (
         <div>
-          <>
-            {account && `Connected account: ${account}`}
-          </>
+          {account && `Connected account: ${account}`}
         </div>
       )}
       {connected && (
-        <button style={{ padding: 10, margin: 10 }} onClick={mintPkp}>
-          Mint PKP
+        <button style={{ padding: 10, margin: 10 }} onClick={getSS}>
+          Get Session Signatures
         </button>
       )}
-      {pkp && (
-        <div> PKP Public Key: {`${pkp.publicKey}`} </div>
+      {sessionSignatures && (
+        <div>
+          <h2>Session Signatures:</h2>
+          <pre>{JSON.stringify(sessionSignatures, null, 2)}</pre>
+        </div>
       )}
     </div>
   );
