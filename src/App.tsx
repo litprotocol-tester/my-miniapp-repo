@@ -23,6 +23,8 @@ interface TelegramUser {
   username?: string;
   auth_date: number;
   hash: string;
+  queryId: string;
+  language_code: string;
 }
 
 declare global {
@@ -52,7 +54,7 @@ function App() {
     ): Promise<{ isValid: boolean; isRecent: boolean }> => {
       console.log("🔄 Validating user Telegram info client side...");
       const { hash, ...otherData } = user;
-      console.log("userdata:",user);
+      console.log("otherData:", otherData);
 
       const dataCheckString = Object.entries(otherData)
         .sort(([a], [b]) => a.localeCompare(b))
@@ -107,9 +109,10 @@ function App() {
         "last_name": telegramAppData.user.last_name || "",
         "username": telegramAppData.user.username,
         "auth_date": Number(telegramAppData.auth_date),
-        "hash": telegramAppData.hash
+        "hash": telegramAppData.hash,
+        "queryId": telegramAppData.queryId,
+        "language_code": telegramAppData.language_code
       }
-      console.log("user object: ", userObject);
       setTelegramUser(userObject);
       setWebApp(telegramApp);
       telegramApp.expand();
