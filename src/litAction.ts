@@ -84,7 +84,8 @@ const _litActionCode = async () => {
         });
       }
   
-      return Lit.Actions.setResponse({ response: "true" });
+      Lit.Actions.setResponse({ response: "true" });
+      return;
     } catch (error) {
       return Lit.Actions.setResponse({
         response: "false",
