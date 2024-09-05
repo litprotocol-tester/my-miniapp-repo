@@ -18,8 +18,11 @@ export const connectToLitNodes = async () => {
     return litNodeClient;
 };
 
-export const connectToLitContracts = async () => {
+export const connectToLitContracts = async (provider: any, account: string) => {
+    const ethersProvider = new ethers.providers.Web3Provider(provider as any);
+    const newSigner = ethersProvider.getSigner(account!);
     const litContracts = new LitContracts({
+        signer: newSigner,
         network: LitNetwork.DatilDev,
     });
     await litContracts.connect();

@@ -27,7 +27,7 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<WebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  //const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -44,22 +44,10 @@ function App() {
   }, []);
 
   const connect = async () => {
-    let accounts;
-
     try {
       const accounts = await sdk?.connect();
       setAccount(accounts?.[0]);
-    } catch (err) {
-      console.warn("failed to connect..", err);
-    }
-    try {
-      const ethersProvider = new ethers.providers.Web3Provider(provider as any);
-      const newSigner = ethersProvider.getSigner(account!);
-      setSigner(newSigner);
-
-      console.log();
-
-      if (accounts?.[0] && webApp) {
+      if (account && webApp) {
         webApp.showPopup({
           title: "Connected",
           message: `Connected to MetaMask with account: ${accounts[0]}`,
@@ -68,14 +56,6 @@ function App() {
       }
     } catch (err) {
       console.warn("failed to connect..", err);
-
-      if (webApp) {
-        webApp.showPopup({
-          title: "Error",
-          message: "Failed to connect to MetaMask",
-          buttons: [{ text: "Close", type: "close" }],
-        });
-      }
     }
   };
 
@@ -89,7 +69,7 @@ function App() {
   };
 
   const mintPkp = async () => {
-    const litContracts = await connectToLitContracts();
+    const litContracts = await connectToLitContracts(provider, account!);
     const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
     setPkp(pkp);
   }
