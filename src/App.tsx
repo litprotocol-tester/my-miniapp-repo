@@ -61,9 +61,8 @@ function App() {
 
  async function isRecent(telegramInitData: string){
     const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
-    const userParams = urlParams.get('user');
-    const userData = JSON.parse(decodeURIComponent(userParams!));
-    const auth_date  = Number(userData.auth_date);
+    const auth_date  = Number(urlParams.get('auth_date'));
+    console.log("auth_date:", auth_date);
     const isRecent = Date.now() / 1000 - auth_date < 600;
     return isRecent;
   }
@@ -74,7 +73,6 @@ function App() {
     const hash = urlParams.get('hash');
     urlParams.delete('hash');
     urlParams.sort();
-    console.log("sorted after hash:", urlParams)
 
     /*
     const userParam = urlParams.get('user');
@@ -88,7 +86,6 @@ function App() {
       dataCheckString += `${key}=${value}\n`;
     }
     dataCheckString = dataCheckString.slice(0, -1);
-    console.log("dataCheckString:", dataCheckString);
   
     const encoder = new TextEncoder();
     const secretKey = await window.crypto.subtle.importKey(
@@ -105,7 +102,6 @@ function App() {
       secretKey,
       encoder.encode(botToken)
     );
-    console.log("botTokenKey:", botTokenKey);
   
     const calculatedHash = await window.crypto.subtle.sign(
       "HMAC",
@@ -118,7 +114,6 @@ function App() {
       ),
       encoder.encode(dataCheckString)
     );
-    console.log("calculatedHash:", calculatedHash);
   
     const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
       .map(b => b.toString(16).padStart(2, '0'))
