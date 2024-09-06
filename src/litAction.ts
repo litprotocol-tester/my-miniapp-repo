@@ -65,11 +65,7 @@ const _litActionCode = async () => {
 
         console.log("Past validation");
 
-      const userParam = urlParams.get('user');
-      const userData = JSON.parse(decodeURIComponent(userParam!));
-      const id = userData.id;
-      const auth_date = Number(userData.auth_date);
-
+      const auth_date  = Number(urlParams.get('auth_date'));
       const isRecent = Date.now() / 1000 - auth_date < 600;
       if (!isRecent) {
         return Lit.Actions.setResponse({
