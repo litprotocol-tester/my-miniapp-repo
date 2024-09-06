@@ -96,10 +96,14 @@ function App() {
       encoder.encode(dataCheckString)
     );
   
-    const isVerified = hash === Array.from(new Uint8Array(calculatedHash))
+    const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-  
+
+    const isVerified = hash === calculatedHashHex;
+    console.log("hash:", hash);
+    console.log("calculatedHashHex:", calculatedHashHex);
+      
     return { isVerified, urlParams };
   }
 
