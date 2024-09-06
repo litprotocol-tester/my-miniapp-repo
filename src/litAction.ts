@@ -12,6 +12,11 @@ const _litActionCode = async () => {
   
     try {
         const _telegramUserData = JSON.parse(telegramUserData);
+        return Lit.Actions.setResponse({
+            response: "true",
+            _telegramUserData
+          });
+
 
         // Validating the Telegram user data
         const urlParams = new URLSearchParams(_telegramUserData);
