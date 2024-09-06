@@ -27,6 +27,7 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
+  const { sdk, connected, /*connecting, */provider /*chainId*/ } = useSDK();
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
@@ -34,7 +35,6 @@ function App() {
   } | null>(null);
   const [sessionSignatures, setSessionSignatures] = useState<any | null>(null);
   const [data, setData] = useState<any | null>(null);
-  const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
 
   useEffect(() => {
     const tgApp = window.Telegram?.WebApp;
@@ -118,13 +118,12 @@ function App() {
     try {
       const accounts = await sdk?.connect();
       setAccount(accounts?.[0]);
-      if (account && webApp) {
-        webApp.showPopup({
+        webApp!.showPopup({
           title: "Connected",
           message: `Connected to MetaMask with account: ${accounts[0]}`,
           buttons: [{ text: "Close", type: "close" }],
         });
-      }
+      
     } catch (err) {
       console.warn("failed to connect..", err);
     }

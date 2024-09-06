@@ -2,8 +2,8 @@ import { LitNodeClient } from '@lit-protocol/lit-node-client';
 import { LitNetwork, AuthMethodScope } from '@lit-protocol/constants';
 import { LitContracts } from '@lit-protocol/contracts-sdk';
 import { litActionCode } from "./litAction";
-import Hash from "typestub-ipfs-only-hash";
 import * as ethers from 'ethers';
+import Hash from "typestub-ipfs-only-hash";
 import {
     LitAbility,
     LitPKPResource,
@@ -20,18 +20,19 @@ export const connectToLitNodes = async () => {
 };
 
 export const connectToLitContracts = async (provider: any) => {
-    const ethersProvider = new ethers.providers.Web3Provider(provider as any);
-    await provider.send("eth_requestAccounts", []);
-    const newSigner = ethersProvider.getSigner();
+  await provider.send("eth_requestAccounts", []);
+  const ethersProvider = new ethers.providers.Web3Provider(provider);
+  const signer = ethersProvider.getSigner();
+
     const litContracts = new LitContracts({
-        signer: newSigner,
+        signer,
         network: LitNetwork.DatilDev,
     });
     await litContracts.connect();
-    console.log(litActionCode);
+
     const hash = await Hash.of(litActionCode);
-    console.log("hash:", await Hash.of(litActionCode));
     const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
+
     const permitted = await litContracts.addPermittedAction({
         authMethodScopes: [AuthMethodScope.SignAnything],
         pkpTokenId: pkp.tokenId,
@@ -41,7 +42,7 @@ export const connectToLitContracts = async (provider: any) => {
     return pkp;
 };
 
-export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: any, telegramUser: string, ) => {
+export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: any, telegramUser: string) => {
     const sessionSignatures= await litNodeClient.getPkpSessionSigs({
         pkpPublicKey: pkp.publicKey,
         litActionCode: Buffer.from(litActionCode).toString("base64"),
