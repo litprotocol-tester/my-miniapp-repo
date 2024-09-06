@@ -66,3 +66,27 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.boxed-code-display {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.boxed-code-display__container {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  background-color: #010507;
+}
+
+.boxed-code-display__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.boxed-code-display__content {
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: monospace;
+}

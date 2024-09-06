@@ -63,8 +63,6 @@ const _litActionCode = async () => {
           });
         }
 
-        console.log("Past validation");
-
       const auth_date  = Number(urlParams.get('auth_date'));
       const isRecent = Date.now() / 1000 - auth_date < 600;
       if (!isRecent) {
@@ -73,11 +71,11 @@ const _litActionCode = async () => {
           reason: "Authenticated Telegram user data is older than 10 minutes",
         });
       }
-      console.log("Past Recent");
 
       const userParam = urlParams.get('user');
       const userData = JSON.parse(decodeURIComponent(userParam!));
       const id = userData.id;
+
       // Checking if usersAuthMethodId is a permitted Auth Method for pkpTokenId
       const usersAuthMethodId = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(`telegram:${id}`)

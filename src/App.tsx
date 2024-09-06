@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import litLogo from "./assets/lit.png";
-import { getSessionSignatures, connectToLitNodes, connectToLitContracts } from "./litConnections";
+import {
+  getSessionSignatures,
+  connectToLitNodes,
+  connectToLitContracts,
+} from "./litConnections";
 import { useSDK } from "@metamask/sdk-react";
 import "./App.css";
 
@@ -15,7 +19,6 @@ interface TelegramWebApp {
   initDataUnsafe: any;
 }
 
-
 declare global {
   interface Window {
     Telegram?: {
@@ -27,13 +30,15 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const { sdk, connected, /*connecting, */provider /*chainId*/ } = useSDK();
+  const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
   const [pkp, setPkp] = useState<{
-    tokenId: any
-    publicKey: string
-    ethAddress: string
+    tokenId: any;
+    publicKey: string;
+    ethAddress: string;
   } | null>(null);
   const [sessionSignatures, setSessionSignatures] = useState<any | null>(null);
+  const [valid, setValid] = useState<boolean | null>(null);
+  const [recent, setRecent] = useState<boolean | null>(null);
   const [data, setData] = useState<any | null>(null);
 
   useEffect(() => {
@@ -43,50 +48,43 @@ function App() {
       setWebApp(tgApp);
       setData(tgApp.initData);
 
-      isRecent(tgApp.initData)
-        .then((isRecent) => {
-          console.log("isRecent:", isRecent);
-        })
+      isRecent(tgApp.initData).then((isRecent) => {
+        setRecent(isRecent);
+      });
 
       verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
-        .then(({ isVerified, urlParams }) => {
-          console.log("verified:", isVerified);
-          console.log("urlParams:", urlParams);
+        .then(( isVerified ) => {
+          setValid(isVerified);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error verifying init data:", error);
         });
     }
   }, []);
 
- async function isRecent(telegramInitData: string){
+  async function isRecent(telegramInitData: string) {
     const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
-    const auth_date  = Number(urlParams.get('auth_date'));
-    console.log("auth_date:", auth_date);
+    const auth_date = Number(urlParams.get("auth_date"));
     const isRecent = Date.now() / 1000 - auth_date < 600;
     return isRecent;
   }
 
-  async function verifyInitData(telegramInitData: string, botToken: string): Promise<{ isVerified: boolean, urlParams: URLSearchParams }> {
+  async function verifyInitData(
+    telegramInitData: string,
+    botToken: string
+  ) {
     const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
-  
-    const hash = urlParams.get('hash');
-    urlParams.delete('hash');
+
+    const hash = urlParams.get("hash");
+    urlParams.delete("hash");
     urlParams.sort();
 
-    /*
-    const userParam = urlParams.get('user');
-    const userData = JSON.parse(decodeURIComponent(userParam!));
-    const id = userData.id;
-    console.log("id:", id);
-    */
-  
-    let dataCheckString = '';
+    let dataCheckString = "";
     for (const [key, value] of urlParams.entries()) {
       dataCheckString += `${key}=${value}\n`;
     }
     dataCheckString = dataCheckString.slice(0, -1);
-  
+
     const encoder = new TextEncoder();
     const secretKey = await window.crypto.subtle.importKey(
       "raw",
@@ -95,14 +93,13 @@ function App() {
       false,
       ["sign"]
     );
-    console.log("secretKey:", secretKey);
-  
+
     const botTokenKey = await window.crypto.subtle.sign(
       "HMAC",
       secretKey,
       encoder.encode(botToken)
     );
-  
+
     const calculatedHash = await window.crypto.subtle.sign(
       "HMAC",
       await window.crypto.subtle.importKey(
@@ -114,25 +111,24 @@ function App() {
       ),
       encoder.encode(dataCheckString)
     );
-  
+
     const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 
     const isVerified = hash === calculatedHashHex;
-    return { isVerified, urlParams };
+    return isVerified;
   }
 
   const connect = async () => {
     try {
       const accounts = await sdk?.connect();
       setAccount(accounts?.[0]);
-        webApp!.showPopup({
-          title: "Connected",
-          message: `Connected to MetaMask with account: ${accounts[0]}`,
-          buttons: [{ text: "Close", type: "close" }],
-        });
-      
+      webApp!.showPopup({
+        title: "Connected",
+        message: `Connected to MetaMask with account: ${accounts[0]}`,
+        buttons: [{ text: "Close", type: "close" }],
+      });
     } catch (err) {
       console.warn("failed to connect..", err);
     }
@@ -143,7 +139,7 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       pkp,
-      data,
+      data
     );
     setSessionSignatures(sessionSignatures);
   };
@@ -151,7 +147,7 @@ function App() {
   const mintPkp = async () => {
     const pkp = await connectToLitContracts(provider);
     setPkp(pkp);
-  }
+  };
 
   return (
     <div className="App">
@@ -159,16 +155,14 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      {(
+      {
         <div>
-          <h2>Telegram User Data:</h2>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
+          <h3>Telegram User Data Validity:</h3>
+          <pre> Recent: {JSON.stringify(recent, null, 2)}</pre>
+          <pre> Valid: {JSON.stringify(valid, null, 2)}</pre>
         </div>
-      )}
-      <button
-        style={{ padding: 10, margin: 10 }}
-        onClick={connect}
-      >
+      }
+      <button style={{ padding: 10, margin: 10 }} onClick={connect}>
         {connected ? "Connect to MetaMask" : "Connected"}
       </button>
       {connected && <div>{account && `Connected account: ${account}`}</div>}
@@ -178,9 +172,13 @@ function App() {
         </button>
       )}
       {sessionSignatures && (
-        <div>
-          <h2>Session Signatures:</h2>
-          <pre>{JSON.stringify(sessionSignatures, null, 2)}</pre>
+        <div className="boxed-code-display">
+          <div className="boxed-code-display__container">
+            <h2 className="boxed-code-display__title">Session Signatures:</h2>
+            <pre className="boxed-code-display__content">
+              {JSON.stringify(sessionSignatures, null, 2)}
+            </pre>
+          </div>
         </div>
       )}
       {connected && (
@@ -189,9 +187,13 @@ function App() {
         </button>
       )}
       {pkp && (
-        <div>
-          <h2>PKP:</h2>
-          <pre>{JSON.stringify(pkp, null, 2)}</pre>
+        <div className="boxed-code-display">
+          <div className="boxed-code-display__container">
+            <h2 className="boxed-code-display__title">PKP:</h2>
+            <pre className="boxed-code-display__content">
+              {JSON.stringify(pkp, null, 2)}
+            </pre>
+          </div>
         </div>
       )}
     </div>
