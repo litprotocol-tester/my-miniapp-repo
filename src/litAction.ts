@@ -12,11 +12,6 @@ const _litActionCode = async () => {
   
     try {
         const _telegramUserData = JSON.parse(telegramUserData);
-        return Lit.Actions.setResponse({
-            response: "true",
-            _telegramUserData
-          });
-
 
         // Validating the Telegram user data
         const urlParams = new URLSearchParams(_telegramUserData);
@@ -61,6 +56,11 @@ const _litActionCode = async () => {
         const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
+
+          return Lit.Actions.setResponse({
+            response: "true",
+            _telegramUserData
+          });
         
         const isValid = calculatedHashHex === hash;
         if (!isValid) {
