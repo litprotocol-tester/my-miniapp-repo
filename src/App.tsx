@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState} from "react";
 import litLogo from "./assets/lit.png";
+import * as crypto from "crypto";
 import { getSessionSignatures, connectToLitNodes, connectToLitContracts } from "./litConnections";
 import { useSDK } from "@metamask/sdk-react";
 import "./App.css";
@@ -45,62 +46,26 @@ function App() {
   const [isUserVerified, setIsUserVerified] = useState<boolean | null>(null);
   const { sdk, connected, provider } = useSDK();
 
-  const verifyTelegramUser = useCallback(
-    async (initDataUnsafe: any): Promise<boolean> => {
-      const verifyDataIntegrity = async (initDataUnsafe: any, hash: string): Promise<boolean> => {
-        const dataCheckString = Object.entries(initDataUnsafe)
-          .filter(([key]) => key !== 'hash') // Exclude the hash from the check
-          .sort()
-          .map(([k, v]) => {
-            if (typeof v === "object" && v !== null) {
-              v = JSON.stringify(v);
-            }
-            return `${k}=${v}`;
-          })
-          .join("\n");
-  
-        const encoder = new TextEncoder();
-        const apiToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-  
-        const secretKeyHash = await crypto.subtle.digest(
-          "SHA-256",
-          encoder.encode("WebAppData" + apiToken)
-        );
-  
-        const key = await crypto.subtle.importKey(
-          "raw",
-          secretKeyHash,
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["sign"]
-        );
-  
-        const signature = await crypto.subtle.sign(
-          "HMAC",
-          key,
-          encoder.encode(dataCheckString)
-        );
-  
-        const calculatedHash = Array.from(new Uint8Array(signature))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-  
-        return calculatedHash === hash;
-      };
-  
-      const hash = initDataUnsafe.hash;
-      delete initDataUnsafe.hash;
-  
-      return await verifyDataIntegrity(initDataUnsafe, hash);
-    },
-    [import.meta.env.VITE_TELEGRAM_BOT_TOKEN]
-  );
+  const verifyDataIntegrity = (initDataUnsafe: any, hash: string) => {
+    const dataCheckString = Object.entries(initDataUnsafe).sort().map(([k, v]) => {
+        if (typeof v === "object" && v !== null) {
+            v = JSON.stringify(v);
+        }
+        
+        return `${k}=${v}`;
+    }).join("\n");
 
+    const secret = crypto.createHmac("sha256", "WebAppData").update(import.meta.env.VITE_TELEGRAM_BOT_TOKEN ?? "");
+    console.log("VITE:", import.meta.env.VITE_TELEGRAM_BOT_TOKEN);
+    const calculatedHash = crypto.createHmac("sha256", secret.digest()).update(dataCheckString).digest("hex");
+    
+    return calculatedHash === hash;
+};
   useEffect(() => {
     if ((window as any).Telegram) {
       const telegramApp = (window as any).Telegram?.WebApp;
       const telegramAppData = telegramApp.initDataUnsafe;
-      console.log("telegramAppData: ", telegramAppData);
+      const {hash, ...otherData} = telegramAppData;
       setTelegramAppData(telegramAppData);
       setWebApp(telegramApp);
       telegramApp.expand();
@@ -108,16 +73,15 @@ function App() {
       // Verify the user
       (async () => {
         try {
-          const isVerified = await verifyTelegramUser(telegramAppData);
+          const isVerified =verifyDataIntegrity(otherData, hash);
           setIsUserVerified(isVerified);
-          console.log("User verification result:", isVerified);
         } catch (error) {
           console.error("Error verifying Telegram user:", error);
           setIsUserVerified(false);
         }
       })();
     }
-  }, [verifyTelegramUser]);
+  });
 
   const connect = async () => {
     try {
