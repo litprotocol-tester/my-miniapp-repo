@@ -11,7 +11,9 @@ interface TelegramWebApp {
     message: string;
     buttons: Array<{ text: string; type: string }>;
   }) => void;
-  initDataUnsafe: {
+  initData: {
+    auth_date?: number;
+    query_id?: string;
     user?: {
       id: number;
       first_name: string;
@@ -23,14 +25,6 @@ interface TelegramWebApp {
   };
 }
 
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  auth_date: number;
-  hash: string;
-}
 
 declare global {
   interface Window {
@@ -43,13 +37,13 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [user, setUser] = useState<TelegramUser | null>(null);
   const [pkp, setPkp] = useState<{
     tokenId: any
     publicKey: string
     ethAddress: string
   } | null>(null);
   const [sessionSignatures, setSessionSignatures] = useState<any | null>(null);
+  const [data, setData] = useState<any | null>(null);
   const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
 
   useEffect(() => {
@@ -57,17 +51,16 @@ function App() {
     if (tgApp) {
       tgApp.ready();
       setWebApp(tgApp);
-      setUser(tgApp.initDataUnsafe.user || null);
-      console.log(user);
+      setData(tgApp.initData);
+      console.log("initData:", tgApp.initData);
     }
   }, []);
 
   const signInTelegram = () => {
-    if (webApp && webApp.initDataUnsafe.user) {
-      setUser(webApp.initDataUnsafe.user);
+    if (webApp && webApp.initData.user) {
       webApp.showPopup({
         title: "Signed In",
-        message: `Welcome, ${webApp.initDataUnsafe.user.first_name}!`,
+        message: `Welcome, ${webApp.initData.user.first_name}!`,
         buttons: [{ text: "Close", type: "close" }],
       });
     } else {
@@ -96,7 +89,7 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       pkp,
-      user,
+      data.user,
     );
     setSessionSignatures(sessionSignatures);
   };
@@ -118,10 +111,10 @@ function App() {
       >
         Sign In with Telegram
       </button>
-      {user && (
+      {data.user && (
         <div>
           <h2>Telegram User Data:</h2>
-          <pre>{JSON.stringify(user, null, 2)}</pre>
+          <pre>{JSON.stringify(data.user, null, 2)}</pre>
         </div>
       )}
       <button
