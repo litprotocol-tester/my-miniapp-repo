@@ -75,6 +75,9 @@ const _litActionCode = async () => {
       }
       console.log("Past Recent");
 
+      const userParam = urlParams.get('user');
+      const userData = JSON.parse(decodeURIComponent(userParam!));
+      const id = userData.id;
       // Checking if usersAuthMethodId is a permitted Auth Method for pkpTokenId
       const usersAuthMethodId = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(`telegram:${id}`)
