@@ -84,7 +84,8 @@ function App() {
       const calculatedHash = Array.from(new Uint8Array(signature))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
-  
+      
+        console.log("calculatedHash: ", calculatedHash);
       const isVerified = calculatedHash === hash;
   
       return { isVerified, urlParams };
