@@ -11,46 +11,59 @@ const _litActionCode = async () => {
     ]);
   
     try {
-      const _telegramUserData = JSON.parse(telegramUserData);
-  
-      // Validating the Telegram user data, go here to learn more:
-      // https://core.telegram.org/widgets/login#checking-authorization
-      const { hash, ...otherData } = _telegramUserData;
-  
-      const dataCheckString = Object.entries(otherData)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, value]) => `${key}=${value}`)
-        .join("\n");
-  
-      const encoder = new TextEncoder();
-      const secretKeyHash = await crypto.subtle.digest(
-        "SHA-256",
-        encoder.encode(telegramBotSecret)
-      );
-      const key = await crypto.subtle.importKey(
-        "raw",
-        secretKeyHash,
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
-      const signature = await crypto.subtle.sign(
-        "HMAC",
-        key,
-        encoder.encode(dataCheckString)
-      );
-  
-      const calculatedHash = Array.from(new Uint8Array(signature))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-  
-      const isValid = calculatedHash === _telegramUserData.hash;
-      if (!isValid) {
-        return Lit.Actions.setResponse({
-          response: "false",
-          reason: "Invalid Telegram user data",
-        });
-      }
+        const _telegramUserData = JSON.parse(telegramUserData);
+
+        // Validating the Telegram user data
+        const urlParams = new URLSearchParams(_telegramUserData);
+        
+        const hash = urlParams.get('hash');
+        urlParams.delete('hash');
+        urlParams.sort();
+        
+        let dataCheckString = '';
+        for (const [key, value] of urlParams.entries()) {
+          dataCheckString += `${key}=${value}\n`;
+        }
+        dataCheckString = dataCheckString.slice(0, -1);
+        
+        const encoder = new TextEncoder();
+        const secretKey = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode("WebAppData"),
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign"]
+        );
+        
+        const botTokenKey = await crypto.subtle.sign(
+          "HMAC",
+          secretKey,
+          encoder.encode(telegramBotSecret)
+        );
+        
+        const calculatedHash = await crypto.subtle.sign(
+          "HMAC",
+          await crypto.subtle.importKey(
+            "raw",
+            botTokenKey,
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+          ),
+          encoder.encode(dataCheckString)
+        );
+        
+        const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+        
+        const isValid = calculatedHashHex === hash;
+        if (!isValid) {
+          return Lit.Actions.setResponse({
+            response: "false",
+            reason: "Invalid Telegram user data",
+          });
+        }        
   
       const isRecent = Date.now() / 1000 - _telegramUserData.auth_date < 600;
       if (!isRecent) {

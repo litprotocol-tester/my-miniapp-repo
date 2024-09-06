@@ -126,7 +126,7 @@ function App() {
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
       pkp,
-      data.user,
+      data,
     );
     setSessionSignatures(sessionSignatures);
   };
