@@ -46,37 +46,25 @@ function App() {
   const { sdk, connected, provider } = useSDK();
 
   const verifyTelegramUser = useCallback(
-    async (telegramAppData: FullTelegramUser | null): Promise<{ isValid: boolean; isRecent: boolean }> => {
-      console.log("🔄 Validating user Telegram info client side...");
-      console.log("telegramAppData within verifyTelegramUser:", telegramAppData);
-      
-      if (!telegramAppData) {
-        console.error("No Telegram app data available");
-        return { isValid: false, isRecent: false };
+    async (telegramInitData: string): Promise<{ isVerified: boolean, urlParams: URLSearchParams }> => {
+      const urlParams = new URLSearchParams(telegramInitData);
+  
+      const hash = urlParams.get('hash');
+      urlParams.delete('hash');
+      urlParams.sort();
+  
+      let dataCheckString = '';
+      for (const [key, value] of urlParams.entries()) {
+        dataCheckString += `${key}=${value}\n`;
       }
+      dataCheckString = dataCheckString.slice(0, -1);
   
-      const initData = new Map(Object.entries(telegramAppData));
-      const hash = initData.get("hash") as string;
-      initData.delete("hash");
-  
-      // Sort the entries alphabetically by key
-      const sortedEntries = [...initData.entries()].sort(([a], [b]) => a.localeCompare(b));
-  
-      const dataToCheck = sortedEntries.map(([key, value]) => {
-        if (typeof value === 'object') {
-          return `${key}=${JSON.stringify(value)}`;
-        }
-        return `${key}=${value}`;
-      }).join("\n");
-  
-      console.log("dataToCheck:", dataToCheck);
-  
+      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
       const encoder = new TextEncoder();
-      const apiToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
   
       const secretKeyHash = await crypto.subtle.digest(
         "SHA-256",
-        encoder.encode("WebAppData" + apiToken)
+        encoder.encode("WebAppData" + botToken)
       );
   
       const key = await crypto.subtle.importKey(
@@ -90,27 +78,16 @@ function App() {
       const signature = await crypto.subtle.sign(
         "HMAC",
         key,
-        encoder.encode(dataToCheck)
+        encoder.encode(dataCheckString)
       );
   
       const calculatedHash = Array.from(new Uint8Array(signature))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
   
-      console.log("calculatedHash: ", calculatedHash);
-      console.log("original hash: ", hash);
+      const isVerified = calculatedHash === hash;
   
-      const isValid = calculatedHash === hash;
-      
-      const auth_date = initData.get("auth_date") as number;
-      const isRecent = Date.now() / 1000 - auth_date < 600;
-      console.log("isRecent: ", Date.now() / 1000 - auth_date);
-  
-      console.log(
-        `ℹ️ User Telegram data is valid: ${isValid}. User data is recent: ${isRecent}`
-      );
-  
-      return { isValid, isRecent };
+      return { isVerified, urlParams };
     },
     [import.meta.env.VITE_TELEGRAM_BOT_TOKEN]
   );
@@ -123,11 +100,20 @@ function App() {
       setTelegramAppData(telegramAppData);
       setWebApp(telegramApp);
       telegramApp.expand();
-
+  
       // Verify the user
-      verifyTelegramUser(telegramAppData).then(({ isValid, isRecent }) => {
-        setIsUserVerified(isValid && isRecent);
-      });
+      (async () => {
+        const initDataString = Object.entries(telegramAppData)
+          .map(([key, value]) => `${key}=${encodeURIComponent(JSON.stringify(value))}`)
+          .join('&');
+        try {
+          const { isVerified } = await verifyTelegramUser(initDataString);
+          setIsUserVerified(isVerified);
+        } catch (error) {
+          console.error("Error verifying Telegram user:", error);
+          setIsUserVerified(false);
+        }
+      })();
     }
   }, [verifyTelegramUser]);
 
