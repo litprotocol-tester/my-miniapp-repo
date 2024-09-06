@@ -42,7 +42,6 @@ function App() {
       tgApp.ready();
       setWebApp(tgApp);
       setData(tgApp.initData);
-      console.log("initData:", tgApp.initData);
       
       verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
         .then(({ isVerified, urlParams }) => {
@@ -61,17 +60,21 @@ function App() {
     const hash = urlParams.get('hash');
     urlParams.delete('hash');
     urlParams.sort();
+    console.log("sorted after hash:", urlParams)
 
+    /*
     const userParam = urlParams.get('user');
     const userData = JSON.parse(decodeURIComponent(userParam!));
     const id = userData.id;
     console.log("id:", id);
+    */
   
     let dataCheckString = '';
     for (const [key, value] of urlParams.entries()) {
       dataCheckString += `${key}=${value}\n`;
     }
     dataCheckString = dataCheckString.slice(0, -1);
+    console.log("dataCheckString:", dataCheckString);
   
     const encoder = new TextEncoder();
     const secretKey = await window.crypto.subtle.importKey(
@@ -81,12 +84,14 @@ function App() {
       false,
       ["sign"]
     );
+    console.log("secretKey:", secretKey);
   
     const botTokenKey = await window.crypto.subtle.sign(
       "HMAC",
       secretKey,
       encoder.encode(botToken)
     );
+    console.log("botTokenKey:", botTokenKey);
   
     const calculatedHash = await window.crypto.subtle.sign(
       "HMAC",
@@ -99,15 +104,15 @@ function App() {
       ),
       encoder.encode(dataCheckString)
     );
+    console.log("calculatedHash:", calculatedHash);
   
     const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    const isVerified = hash === calculatedHashHex;
-    console.log("hash:", hash);
-    console.log("calculatedHashHex:", calculatedHashHex);
-      
+      console.log("calculatedHashHex:", calculatedHashHex);
+
+    const isVerified = hash === calculatedHashHex;    
     return { isVerified, urlParams };
   }
 

@@ -17,12 +17,14 @@ const _litActionCode = async () => {
         const hash = urlParams.get('hash');
         urlParams.delete('hash');
         urlParams.sort();
+        console.log("sorted after hash:", urlParams)
         
         let dataCheckString = '';
         for (const [key, value] of urlParams.entries()) {
           dataCheckString += `${key}=${value}\n`;
         }
         dataCheckString = dataCheckString.slice(0, -1);
+        console.log("dataCheckString:", dataCheckString);
         
         const encoder = new TextEncoder();
         const secretKey = await crypto.subtle.importKey(
@@ -32,12 +34,14 @@ const _litActionCode = async () => {
           false,
           ["sign"]
         );
+        console.log("secretKey:", secretKey);
         
         const botTokenKey = await crypto.subtle.sign(
           "HMAC",
           secretKey,
           encoder.encode(telegramBotSecret)
         );
+        console.log("botTokenKey:", botTokenKey);
         
         const calculatedHash = await crypto.subtle.sign(
           "HMAC",
@@ -50,16 +54,16 @@ const _litActionCode = async () => {
           ),
           encoder.encode(dataCheckString)
         );
+        console.log("calculatedHash:", calculatedHash);
         
         const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
 
+        console.log("calculatedHashHex:", calculatedHashHex);
+
         const isValid = calculatedHashHex === hash;
         if (!isValid) {
-          console.log("Telegram user data", telegramUserData);
-          console.log("telegramBotSecret", telegramBotSecret);
-          console.log("Invalid Telegram user data", calculatedHashHex, hash);
           return Lit.Actions.setResponse({
             response: "false",
             reason: "Invalid Telegram user data",
