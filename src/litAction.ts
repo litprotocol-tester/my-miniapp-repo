@@ -64,6 +64,7 @@ const _litActionCode = async () => {
         
         const isValid = calculatedHashHex === hash;
         if (!isValid) {
+          console.log("Invalid Telegram user data", calculatedHashHex, hash);
           return Lit.Actions.setResponse({
             response: "false",
             reason: "Invalid Telegram user data",
@@ -108,6 +109,7 @@ const _litActionCode = async () => {
       Lit.Actions.setResponse({ response: "true" });
       return;
     } catch (error) {
+      console.log("error:", error);
       return Lit.Actions.setResponse({
         response: "false",
         reason: `Error: ${error.message}`,
