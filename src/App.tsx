@@ -110,8 +110,6 @@ function App() {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-      console.log("calculatedHashHex:", calculatedHashHex);
-
     const isVerified = hash === calculatedHashHex;    
     return { isVerified, urlParams };
   }
