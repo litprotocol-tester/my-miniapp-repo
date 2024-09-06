@@ -12,7 +12,7 @@ interface TelegramWebApp {
     message: string;
     buttons: Array<{ text: string; type: string }>;
   }) => void;
-  initDataUnsafe: {
+  initData: {
     user?: any;
     query_id?: string;
     auth_date?: number;
@@ -46,8 +46,8 @@ function App() {
   const [isUserVerified, setIsUserVerified] = useState<boolean | null>(null);
   const { sdk, connected, provider } = useSDK();
 
-  const verifyDataIntegrity = (initDataUnsafe: any, hash: string) => {
-    const dataCheckString = Object.entries(initDataUnsafe).sort().map(([k, v]) => {
+  const verifyDataIntegrity = (initData: any, hash: string) => {
+    const dataCheckString = Object.entries(initData).sort().map(([k, v]) => {
         if (typeof v === "object" && v !== null) {
             v = JSON.stringify(v);
         }
@@ -64,7 +64,7 @@ function App() {
   useEffect(() => {
     if ((window as any).Telegram) {
       const telegramApp = (window as any).Telegram?.WebApp;
-      const telegramAppData = telegramApp.initDataUnsafe;
+      const telegramAppData = telegramApp.initData;
       const {hash, ...otherData} = telegramAppData;
       setTelegramAppData(telegramAppData);
       setWebApp(telegramApp);
