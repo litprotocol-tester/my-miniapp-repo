@@ -43,10 +43,6 @@ function App() {
       setWebApp(tgApp);
       setData(tgApp.initData);
 
-      isRecent(data).then((isRecent) => {
-        console.log("isRecent:", isRecent);
-      });
-      
       verifyInitData(data, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
         .then(({ isVerified, urlParams }) => {
           console.log("verified:", isVerified);
@@ -58,14 +54,14 @@ function App() {
     }
   }, []);
 
-  async function isRecent(telegramInitData: string){
+ /* async function isRecent(telegramInitData: string){
     const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
     const userParams = urlParams.get('user');
     const userData = JSON.parse(decodeURIComponent(userParams!));
     const auth_date  = Number(userData.auth_date);
     const isRecent = Date.now() / 1000 - auth_date < 600;
     return isRecent;
-  }
+  }*/
 
   async function verifyInitData(telegramInitData: string, botToken: string): Promise<{ isVerified: boolean, urlParams: URLSearchParams }> {
     const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
