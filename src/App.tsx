@@ -42,8 +42,12 @@ function App() {
       tgApp.ready();
       setWebApp(tgApp);
       setData(tgApp.initData);
+
+      isRecent(data).then((isRecent) => {
+        console.log("isRecent:", isRecent);
+      });
       
-      verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
+      verifyInitData(data, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
         .then(({ isVerified, urlParams }) => {
           console.log("verified:", isVerified);
           console.log("urlParams:", urlParams);
@@ -53,6 +57,15 @@ function App() {
         });
     }
   }, []);
+
+  async function isRecent(telegramInitData: string){
+    const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
+    const userParams = urlParams.get('user');
+    const userData = JSON.parse(decodeURIComponent(userParams!));
+    const auth_date  = Number(userData.auth_date);
+    const isRecent = Date.now() / 1000 - auth_date < 600;
+    return isRecent;
+  }
 
   async function verifyInitData(telegramInitData: string, botToken: string): Promise<{ isVerified: boolean, urlParams: URLSearchParams }> {
     const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
@@ -110,7 +123,7 @@ function App() {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    const isVerified = hash === calculatedHashHex;    
+    const isVerified = hash === calculatedHashHex;
     return { isVerified, urlParams };
   }
 

@@ -17,11 +17,6 @@ const _litActionCode = async () => {
         const hash = urlParams.get('hash');
         urlParams.delete('hash');
         urlParams.sort();
-
-        const userParam = urlParams.get('user');
-        const userData = JSON.parse(decodeURIComponent(userParam!));
-        const id = userData.id;
-        const auth_date = Number(userData.auth_date);
         
         let dataCheckString = '';
         for (const [key, value] of urlParams.entries()) {
@@ -70,6 +65,10 @@ const _litActionCode = async () => {
 
         console.log("Past validation");
 
+      const userParam = urlParams.get('user');
+      const userData = JSON.parse(decodeURIComponent(userParam!));
+      const id = userData.id;
+      const auth_date = Number(userData.auth_date);
 
       const isRecent = Date.now() / 1000 - auth_date < 600;
       if (!isRecent) {
