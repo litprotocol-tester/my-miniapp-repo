@@ -12,6 +12,7 @@ interface TelegramWebApp {
     buttons: Array<{ text: string; type: string }>;
   }) => void;
   initData: string;
+  initDataUnsafe: any;
 }
 
 
@@ -33,6 +34,7 @@ function App() {
   } | null>(null);
   const [sessionSignatures, setSessionSignatures] = useState<any | null>(null);
   const [data, setData] = useState<any | null>(null);
+  const [dataUnsafe, setDataUnsafe] = useState<any | null>(null);
   const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
 
   useEffect(() => {
@@ -42,6 +44,8 @@ function App() {
       setWebApp(tgApp);
       setData(tgApp.initData);
       console.log("initData:", tgApp.initData);
+      setDataUnsafe(tgApp.initDataUnsafe);
+      console.log("initDataUnsafe:", dataUnsafe);
       
       verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
         .then(({ isVerified, urlParams }) => {
@@ -66,6 +70,7 @@ function App() {
       dataCheckString += `${key}=${value}\n`;
     }
     dataCheckString = dataCheckString.slice(0, -1);
+    console.log("dataCheckString:", dataCheckString);
   
     const encoder = new TextEncoder();
     const secretKey = await window.crypto.subtle.importKey(
