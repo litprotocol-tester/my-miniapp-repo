@@ -1,6 +1,5 @@
-import { useEffect, useState} from "react";
+import { useEffect, useState, useCallback } from "react";
 import litLogo from "./assets/lit.png";
-import * as crypto from "crypto";
 import { getSessionSignatures, connectToLitNodes, connectToLitContracts } from "./litConnections";
 import { useSDK } from "@metamask/sdk-react";
 import "./App.css";
@@ -12,7 +11,7 @@ interface TelegramWebApp {
     message: string;
     buttons: Array<{ text: string; type: string }>;
   }) => void;
-  initData: {
+  initDataUnsafe: {
     user?: any;
     query_id?: string;
     auth_date?: number;
@@ -46,42 +45,91 @@ function App() {
   const [isUserVerified, setIsUserVerified] = useState<boolean | null>(null);
   const { sdk, connected, provider } = useSDK();
 
-  const verifyDataIntegrity = (initData: any, hash: string) => {
-    const dataCheckString = Object.entries(initData).sort().map(([k, v]) => {
-        if (typeof v === "object" && v !== null) {
-            v = JSON.stringify(v);
+  const verifyTelegramUser = useCallback(
+    async (telegramAppData: FullTelegramUser | null): Promise<{ isValid: boolean; isRecent: boolean }> => {
+      console.log("🔄 Validating user Telegram info client side...");
+      console.log("telegramAppData within verifyTelegramUser:", telegramAppData);
+      
+      if (!telegramAppData) {
+        console.error("No Telegram app data available");
+        return { isValid: false, isRecent: false };
+      }
+  
+      const initData = new Map(Object.entries(telegramAppData));
+      const hash = initData.get("hash") as string;
+      initData.delete("hash");
+  
+      // Sort the entries alphabetically by key
+      const sortedEntries = [...initData.entries()].sort(([a], [b]) => a.localeCompare(b));
+  
+      const dataToCheck = sortedEntries.map(([key, value]) => {
+        if (typeof value === 'object') {
+          return `${key}=${JSON.stringify(value)}`;
         }
-        
-        return `${k}=${v}`;
-    }).join("\n");
+        return `${key}=${value}`;
+      }).join("\n");
+  
+      console.log("dataToCheck:", dataToCheck);
+  
+      const encoder = new TextEncoder();
+      const apiToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+  
+      const secretKeyHash = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode("WebAppData" + apiToken)
+      );
+  
+      const key = await crypto.subtle.importKey(
+        "raw",
+        secretKeyHash,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+  
+      const signature = await crypto.subtle.sign(
+        "HMAC",
+        key,
+        encoder.encode(dataToCheck)
+      );
+  
+      const calculatedHash = Array.from(new Uint8Array(signature))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+  
+      console.log("calculatedHash: ", calculatedHash);
+      console.log("original hash: ", hash);
+  
+      const isValid = calculatedHash === hash;
+      
+      const auth_date = initData.get("auth_date") as number;
+      const isRecent = Date.now() / 1000 - auth_date < 600;
+      console.log("isRecent: ", Date.now() / 1000 - auth_date);
+  
+      console.log(
+        `ℹ️ User Telegram data is valid: ${isValid}. User data is recent: ${isRecent}`
+      );
+  
+      return { isValid, isRecent };
+    },
+    [import.meta.env.VITE_TELEGRAM_BOT_TOKEN]
+  );
 
-    const secret = crypto.createHmac("sha256", "WebAppData").update(import.meta.env.VITE_TELEGRAM_BOT_TOKEN ?? "");
-    console.log("VITE:", import.meta.env.VITE_TELEGRAM_BOT_TOKEN);
-    const calculatedHash = crypto.createHmac("sha256", secret.digest()).update(dataCheckString).digest("hex");
-    
-    return calculatedHash === hash;
-};
   useEffect(() => {
     if ((window as any).Telegram) {
       const telegramApp = (window as any).Telegram?.WebApp;
       const telegramAppData = telegramApp.initData;
-      const {hash, ...otherData} = telegramAppData;
+      console.log("telegramAppData: ", telegramAppData)
       setTelegramAppData(telegramAppData);
       setWebApp(telegramApp);
       telegramApp.expand();
-  
+
       // Verify the user
-      (async () => {
-        try {
-          const isVerified =verifyDataIntegrity(otherData, hash);
-          setIsUserVerified(isVerified);
-        } catch (error) {
-          console.error("Error verifying Telegram user:", error);
-          setIsUserVerified(false);
-        }
-      })();
+      verifyTelegramUser(telegramAppData).then(({ isValid, isRecent }) => {
+        setIsUserVerified(isValid && isRecent);
+      });
     }
-  });
+  }, [verifyTelegramUser]);
 
   const connect = async () => {
     try {
