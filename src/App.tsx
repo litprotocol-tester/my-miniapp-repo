@@ -111,10 +111,10 @@ function App() {
       >
         Sign In with Telegram
       </button>
-      {data.user && (
+      {(
         <div>
           <h2>Telegram User Data:</h2>
-          <pre>{JSON.stringify(data.user, null, 2)}</pre>
+          <pre>{JSON.stringify(data, null, 2)}</pre>
         </div>
       )}
       <button
