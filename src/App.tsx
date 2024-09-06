@@ -53,9 +53,56 @@ function App() {
       setWebApp(tgApp);
       setData(tgApp.initData);
       console.log("initData:", tgApp.initData);
+      verifyInitData(data, import.meta.env.VITE_TELEGRAM_BOT_TOKEN);
     }
   }, []);
 
+  async function verifyInitData(telegramInitData: string, botToken: string): Promise<{ isVerified: boolean, urlParams: URLSearchParams }> {
+    const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
+  
+    const hash = urlParams.get('hash');
+    urlParams.delete('hash');
+    urlParams.sort();
+  
+    let dataCheckString = '';
+    for (const [key, value] of urlParams.entries()) {
+      dataCheckString += `${key}=${value}\n`;
+    }
+    dataCheckString = dataCheckString.slice(0, -1);
+  
+    const encoder = new TextEncoder();
+    const secretKey = await window.crypto.subtle.importKey(
+      "raw",
+      encoder.encode("WebAppData"),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+  
+    const botTokenKey = await window.crypto.subtle.sign(
+      "HMAC",
+      secretKey,
+      encoder.encode(botToken)
+    );
+  
+    const calculatedHash = await window.crypto.subtle.sign(
+      "HMAC",
+      await window.crypto.subtle.importKey(
+        "raw",
+        botTokenKey,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      ),
+      encoder.encode(dataCheckString)
+    );
+  
+    const isVerified = hash === Array.from(new Uint8Array(calculatedHash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  
+    return { isVerified, urlParams };
+  }
   const signInTelegram = () => {
     if (webApp && webApp.initData.user) {
       webApp.showPopup({
