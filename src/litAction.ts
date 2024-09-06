@@ -57,10 +57,7 @@ const _litActionCode = async () => {
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
 
-          return Lit.Actions.setResponse({
-            response: "true",
-            _telegramUserData
-          });
+          
         
         const isValid = calculatedHashHex === hash;
         if (!isValid) {
@@ -68,7 +65,12 @@ const _litActionCode = async () => {
             response: "false",
             reason: "Invalid Telegram user data",
           });
-        }        
+        }
+
+        return Lit.Actions.setResponse({
+            response: "true",
+            _telegramUserData
+          });
   
       const isRecent = Date.now() / 1000 - _telegramUserData.auth_date < 600;
       if (!isRecent) {
