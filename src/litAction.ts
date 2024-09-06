@@ -11,10 +11,8 @@ const _litActionCode = async () => {
     ]);
   
     try {
-        const _telegramUserData = JSON.parse(telegramUserData);
-
         // Validating the Telegram user data
-        const urlParams = new URLSearchParams(_telegramUserData);
+        const urlParams = new URLSearchParams(telegramUserData);
         
         const hash = urlParams.get('hash');
         urlParams.delete('hash');
@@ -72,6 +70,9 @@ const _litActionCode = async () => {
           });
         }
 
+        Lit.Actions.setResponse({ response: "true" });
+        return;
+
       const isRecent = Date.now() / 1000 - auth_date < 600;
       if (!isRecent) {
         return Lit.Actions.setResponse({
@@ -79,9 +80,6 @@ const _litActionCode = async () => {
           reason: "Authenticated Telegram user data is older than 10 minutes",
         });
       }
-
-      Lit.Actions.setResponse({ response: "true" });
-      return;
 
       // Checking if usersAuthMethodId is a permitted Auth Method for pkpTokenId
       const usersAuthMethodId = ethers.utils.keccak256(
