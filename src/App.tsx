@@ -52,6 +52,8 @@ function App() {
       const hash = urlParams.get('hash');
       urlParams.delete('hash');
       urlParams.sort();
+
+      
   
       let dataCheckString = '';
       for (const [key, value] of urlParams.entries()) {
