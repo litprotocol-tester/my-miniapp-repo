@@ -1,4 +1,3 @@
-// @ts-nocheck
 
 const _litActionCode = async () => {
     const LIT_PKP_PERMISSIONS_CONTRACT_ADDRESS =
@@ -19,6 +18,11 @@ const _litActionCode = async () => {
         const hash = urlParams.get('hash');
         urlParams.delete('hash');
         urlParams.sort();
+
+        const userParam = urlParams.get('user');
+        const userData = JSON.parse(decodeURIComponent(userParam!));
+        const id = userData.id;
+        const auth_date = Number(userData.auth_date);
         
         let dataCheckString = '';
         for (const [key, value] of urlParams.entries()) {
@@ -67,7 +71,7 @@ const _litActionCode = async () => {
           });
         }
 
-      const isRecent = Date.now() / 1000 - _telegramUserData.auth_date < 600;
+      const isRecent = Date.now() / 1000 - auth_date < 600;
       if (!isRecent) {
         return Lit.Actions.setResponse({
           response: "false",
@@ -75,15 +79,9 @@ const _litActionCode = async () => {
         });
       }
 
-      return Lit.Actions.setResponse({
-        response: "true",
-        _telegramUserData
-      });
-
-  
       // Checking if usersAuthMethodId is a permitted Auth Method for pkpTokenId
       const usersAuthMethodId = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes(`telegram:${_telegramUserData.id}`)
+        ethers.utils.toUtf8Bytes(`telegram:${id}`)
       );
       const abiEncodedData =
         IS_PERMITTED_AUTH_METHOD_INTERFACE.encodeFunctionData(
