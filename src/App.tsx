@@ -46,51 +46,52 @@ function App() {
   const { sdk, connected, provider } = useSDK();
 
   const verifyTelegramUser = useCallback(
-    async (telegramInitData: string): Promise<{ isVerified: boolean, urlParams: URLSearchParams }> => {
-      const urlParams = new URLSearchParams(telegramInitData);
+    async (initDataUnsafe: any): Promise<boolean> => {
+      const verifyDataIntegrity = async (initDataUnsafe: any, hash: string): Promise<boolean> => {
+        const dataCheckString = Object.entries(initDataUnsafe)
+          .filter(([key]) => key !== 'hash') // Exclude the hash from the check
+          .sort()
+          .map(([k, v]) => {
+            if (typeof v === "object" && v !== null) {
+              v = JSON.stringify(v);
+            }
+            return `${k}=${v}`;
+          })
+          .join("\n");
   
-      const hash = urlParams.get('hash');
-      urlParams.delete('hash');
-      urlParams.sort();
-
-      
+        const encoder = new TextEncoder();
+        const apiToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
   
-      let dataCheckString = '';
-      for (const [key, value] of urlParams.entries()) {
-        dataCheckString += `${key}=${value}\n`;
-      }
-      dataCheckString = dataCheckString.slice(0, -1);
+        const secretKeyHash = await crypto.subtle.digest(
+          "SHA-256",
+          encoder.encode("WebAppData" + apiToken)
+        );
   
-      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-      const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          "raw",
+          secretKeyHash,
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign"]
+        );
   
-      const secretKeyHash = await crypto.subtle.digest(
-        "SHA-256",
-        encoder.encode("WebAppData" + botToken)
-      );
+        const signature = await crypto.subtle.sign(
+          "HMAC",
+          key,
+          encoder.encode(dataCheckString)
+        );
   
-      const key = await crypto.subtle.importKey(
-        "raw",
-        secretKeyHash,
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
+        const calculatedHash = Array.from(new Uint8Array(signature))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
   
-      const signature = await crypto.subtle.sign(
-        "HMAC",
-        key,
-        encoder.encode(dataCheckString)
-      );
+        return calculatedHash === hash;
+      };
   
-      const calculatedHash = Array.from(new Uint8Array(signature))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-      
-        console.log("calculatedHash: ", calculatedHash);
-      const isVerified = calculatedHash === hash;
+      const hash = initDataUnsafe.hash;
+      delete initDataUnsafe.hash;
   
-      return { isVerified, urlParams };
+      return await verifyDataIntegrity(initDataUnsafe, hash);
     },
     [import.meta.env.VITE_TELEGRAM_BOT_TOKEN]
   );
@@ -99,19 +100,17 @@ function App() {
     if ((window as any).Telegram) {
       const telegramApp = (window as any).Telegram?.WebApp;
       const telegramAppData = telegramApp.initDataUnsafe;
-      console.log("telegramAppData: ", telegramAppData)
+      console.log("telegramAppData: ", telegramAppData);
       setTelegramAppData(telegramAppData);
       setWebApp(telegramApp);
       telegramApp.expand();
   
       // Verify the user
       (async () => {
-        const initDataString = Object.entries(telegramAppData)
-          .map(([key, value]) => `${key}=${encodeURIComponent(JSON.stringify(value))}`)
-          .join('&');
         try {
-          const { isVerified } = await verifyTelegramUser(initDataString);
+          const isVerified = await verifyTelegramUser(telegramAppData);
           setIsUserVerified(isVerified);
+          console.log("User verification result:", isVerified);
         } catch (error) {
           console.error("Error verifying Telegram user:", error);
           setIsUserVerified(false);
