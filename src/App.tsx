@@ -62,8 +62,10 @@ function App() {
     urlParams.delete('hash');
     urlParams.sort();
 
-    const id = urlParams.get('id');
-    console.log("user:", id);
+    const userParam = urlParams.get('user');
+    const userData = JSON.parse(decodeURIComponent(userParam!));
+    const id = userData.id;
+    console.log("id:", id);
   
     let dataCheckString = '';
     for (const [key, value] of urlParams.entries()) {
