@@ -43,12 +43,10 @@ function App() {
       setData(tgApp.initData);
       console.log("initData:", tgApp.initData);
       
-      // Correctly handle the asynchronous verifyInitData function
       verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
         .then(({ isVerified, urlParams }) => {
           console.log("verified:", isVerified);
           console.log("urlParams:", urlParams);
-          // You can use isVerified and urlParams here as needed
         })
         .catch(error => {
           console.error("Error verifying init data:", error);
