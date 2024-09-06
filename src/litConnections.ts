@@ -53,7 +53,6 @@ export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: an
             telegramUserData: JSON.stringify(telegramUser),
             telegramBotSecret: import.meta.env.VITE_TELEGRAM_BOT_TOKEN,
             pkpTokenId: pkp.tokenId,
-            magicNumber: 42,
           },
           resourceAbilityRequests: [
             {
