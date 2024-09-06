@@ -67,11 +67,6 @@ const _litActionCode = async () => {
           });
         }
 
-        return Lit.Actions.setResponse({
-            response: "true",
-            _telegramUserData
-          });
-  
       const isRecent = Date.now() / 1000 - _telegramUserData.auth_date < 600;
       if (!isRecent) {
         return Lit.Actions.setResponse({
@@ -79,6 +74,12 @@ const _litActionCode = async () => {
           reason: "Authenticated Telegram user data is older than 10 minutes",
         });
       }
+
+      return Lit.Actions.setResponse({
+        response: "true",
+        _telegramUserData
+      });
+
   
       // Checking if usersAuthMethodId is a permitted Auth Method for pkpTokenId
       const usersAuthMethodId = ethers.utils.keccak256(
