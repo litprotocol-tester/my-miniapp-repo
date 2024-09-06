@@ -17,14 +17,17 @@ const _litActionCode = async () => {
         const hash = urlParams.get('hash');
         urlParams.delete('hash');
         urlParams.sort();
-        console.log("sorted after hash:", urlParams)
+
+        const userParam = urlParams.get('user');
+        const userData = JSON.parse(decodeURIComponent(userParam!));
+        const id = userData.id;
+        const auth_date = Number(userData.auth_date);
         
         let dataCheckString = '';
         for (const [key, value] of urlParams.entries()) {
           dataCheckString += `${key}=${value}\n`;
         }
         dataCheckString = dataCheckString.slice(0, -1);
-        console.log("dataCheckString:", dataCheckString);
         
         const encoder = new TextEncoder();
         const secretKey = await crypto.subtle.importKey(
@@ -34,14 +37,12 @@ const _litActionCode = async () => {
           false,
           ["sign"]
         );
-        console.log("secretKey:", secretKey);
         
         const botTokenKey = await crypto.subtle.sign(
           "HMAC",
           secretKey,
           encoder.encode(telegramBotSecret)
         );
-        console.log("botTokenKey:", botTokenKey);
         
         const calculatedHash = await crypto.subtle.sign(
           "HMAC",
@@ -54,13 +55,10 @@ const _litActionCode = async () => {
           ),
           encoder.encode(dataCheckString)
         );
-        console.log("calculatedHash:", calculatedHash);
         
         const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
-
-        console.log("calculatedHashHex:", calculatedHashHex);
 
         const isValid = calculatedHashHex === hash;
         if (!isValid) {
@@ -70,13 +68,8 @@ const _litActionCode = async () => {
           });
         }
 
-        Lit.Actions.setResponse({ response: "true" });
-        return;
+        console.log("Past validation");
 
-        const userParam = urlParams.get('user');
-        const userData = JSON.parse(decodeURIComponent(userParam!));
-        const id = userData.id;
-        const auth_date = Number(userData.auth_date);
 
       const isRecent = Date.now() / 1000 - auth_date < 600;
       if (!isRecent) {
@@ -85,6 +78,7 @@ const _litActionCode = async () => {
           reason: "Authenticated Telegram user data is older than 10 minutes",
         });
       }
+      console.log("Past Recent");
 
       // Checking if usersAuthMethodId is a permitted Auth Method for pkpTokenId
       const usersAuthMethodId = ethers.utils.keccak256(
@@ -95,14 +89,18 @@ const _litActionCode = async () => {
           "isPermittedAuthMethod",
           [pkpTokenId, TELEGRAM_AUTH_METHOD_TYPE, usersAuthMethodId]
         );
+
+      console.log("abiEncodedData:", abiEncodedData);
       const isPermittedTx = {
         to: LIT_PKP_PERMISSIONS_CONTRACT_ADDRESS,
         data: abiEncodedData,
       };
+      console.log("isPermittedTx:", isPermittedTx);
       const isPermitted = await Lit.Actions.callContract({
         chain: "yellowstone",
         txn: ethers.utils.serializeTransaction(isPermittedTx),
       });
+      console.log("isPermitted:", isPermitted);
       if (!isPermitted) {
         return Lit.Actions.setResponse({
           response: "false",
