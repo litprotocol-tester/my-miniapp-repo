@@ -11,18 +11,7 @@ interface TelegramWebApp {
     message: string;
     buttons: Array<{ text: string; type: string }>;
   }) => void;
-  initData: {
-    auth_date?: number;
-    query_id?: string;
-    user?: {
-      id: number;
-      first_name: string;
-      last_name?: string;
-      username?: string;
-      auth_date: number;
-      hash: string;
-    };
-  };
+  initData: string;
 }
 
 
@@ -53,7 +42,17 @@ function App() {
       setWebApp(tgApp);
       setData(tgApp.initData);
       console.log("initData:", tgApp.initData);
-      verifyInitData(data, import.meta.env.VITE_TELEGRAM_BOT_TOKEN);
+      
+      // Correctly handle the asynchronous verifyInitData function
+      verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_TOKEN)
+        .then(({ isVerified, urlParams }) => {
+          console.log("verified:", isVerified);
+          console.log("urlParams:", urlParams);
+          // You can use isVerified and urlParams here as needed
+        })
+        .catch(error => {
+          console.error("Error verifying init data:", error);
+        });
     }
   }, []);
 
@@ -103,17 +102,6 @@ function App() {
   
     return { isVerified, urlParams };
   }
-  const signInTelegram = () => {
-    if (webApp && webApp.initData.user) {
-      webApp.showPopup({
-        title: "Signed In",
-        message: `Welcome, ${webApp.initData.user.first_name}!`,
-        buttons: [{ text: "Close", type: "close" }],
-      });
-    } else {
-      console.error("WebApp or user data not available");
-    }
-  };
 
   const connect = async () => {
     try {
@@ -152,12 +140,6 @@ function App() {
         <img src={litLogo} className="App-logo" alt="logo" />
         <h1>Telegram Mini App</h1>
       </header>
-      <button
-        style={{ padding: 10, margin: 10 }}
-        onClick={signInTelegram}
-      >
-        Sign In with Telegram
-      </button>
       {(
         <div>
           <h2>Telegram User Data:</h2>
