@@ -12,7 +12,7 @@ import {
 
 export const connectToLitNodes = async () => {
     const litNodeClient = new LitNodeClient({
-        litNetwork: LitNetwork.DatilDev,
+        litNetwork: LitNetwork.DatilTest,
         debug: false,
       });
     await litNodeClient.connect();
@@ -26,7 +26,7 @@ export const mintNewPkp = async (provider: any) => {
 
     const litContracts = new LitContracts({
         signer,
-        network: LitNetwork.DatilDev,
+        network: LitNetwork.DatilTest,
     });
     await litContracts.connect();
 
