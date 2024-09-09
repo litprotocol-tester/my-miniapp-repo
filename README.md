@@ -1,4 +1,4 @@
-# Creating a Mini App with Lit
+# Implementing Lit within a Telegram Mini App
 This code example demonstrates how to implement custom authentication and authorization for a PKP (Programmable Key Pair) within a Telegram Mini App. The end result is a PKP that can only be used to sign data if the Telegram Authentication data is valid and recent.
 
 This implementation is based on the [custom-auth-telegram-example](https://github.com/LIT-Protocol/custom-auth-telegram-example), but the logic has been changed to work for a Telegram Mini App. We will be deploying the code example on Vercel. This can be changed depending on your implementation, but your Telegram Mini App will need an HTTPS endpoint.
