@@ -87,6 +87,23 @@ Now enter the URL generated for your project by Vercel, after you receive the su
 
 ### Step 4: Run the Example
 
-Now you can go back to the web app using the Vercel generated URL and run the code example. If you see the error `Bot domain invalid`, that means the URL you're accessing does not match the URL you gave [@BotFather](https://t.me/botfather) when running the `/setdomain` command.
-
 In order to successfully run the example, the Ethereum account that you connect to the web app using your browser wallet extension needs to have Lit test tokens. If you don't already have some, you can request some using [the faucet](https://chronicle-yellowstone-faucet.getlit.dev/).
+
+Your Mini App opened in Telegram should now look like:
+![image](https://github.com/user-attachments/assets/6bab315f-1db2-404c-bd59-602e0545f26d)
+
+If your Mini App says `Valid: false`, there might be something wrong with the `VITE_TELEGRAM_BOT_SECRET` in Vercel. 
+
+## Exploring the Code
+
+If you'd like to dive deeper into the code to understand how this example works, below is a brief explanation of some of the files you'll want to look at:
+- [App.tsx](./App.tsx) contains the logic for connecting to MetaMask, getting the Telegram user info, and displaying the content within the Mini App.
+  - This file contains the React logic for the buttons, but also includes code that authenticates the received Telegram OAuth info as a sanity check.
+  - This is one of the files that will leak your `VITE_TELEGRAM_BOT_SECRET` to anyone who visits your web app. You'll want to refactor the logic in this file that handles `VITE_TELEGRAM_BOT_SECRET` to a server.
+- [telegramAuthHelper.ts](./src/telegramAuthHelper.ts) contains the code for verifying the Telegram user data with the given hash, and ensuring that the user data is recent (within the last 10 minutes)
+- [litConnections.ts](./src/litConnections.ts) contains the code for connecting to the Lit network, minting a new PKP, adding a permitted Lit Action to the PKP, and generating the PKP session signatures.
+  - This is one of the files that will leak your `VITE_TELEGRAM_BOT_SECRET` to anyone who visits your web app. You'll want to refactor the logic in this file that handles `VITE_TELEGRAM_BOT_SECRET` to a server.
+- [litAction.ts](./src/litAction.ts) contains the Lit Action code
+  - The Lit Action is hardcoded to only communicate with the PKP Permission contract deployed on Chronicle Yellowstone at `0x60C1ddC8b9e38F730F0e7B70A2F84C1A98A69167`.
+  - It's also hardcoded to only use the Auth Method with the type: `keccak256('Lit Developer Guide Telegram Auth Example')`.
+
