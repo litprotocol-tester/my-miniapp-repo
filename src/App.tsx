@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
+import { useSDK } from "@metamask/sdk-react";
+
+import "./App.css";
 import litLogo from "./assets/lit.png";
 import {
   getSessionSignatures,
   connectToLitNodes,
-  connectToLitContracts,
+  mintNewPkp,
 } from "./litConnections";
-import { useSDK } from "@metamask/sdk-react";
-import "./App.css";
+import {
+  isRecent,
+  verifyInitData,
+} from "./telegramAuthHelpers";
+
 
 interface TelegramWebApp {
   ready: () => void;
@@ -16,7 +22,6 @@ interface TelegramWebApp {
     buttons: Array<{ text: string; type: string }>;
   }) => void;
   initData: string;
-  initDataUnsafe: any;
 }
 
 declare global {
@@ -30,7 +35,7 @@ declare global {
 function App() {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const { sdk, connected, /*connecting, */ provider /*chainId*/ } = useSDK();
+  const { sdk, connected, provider } = useSDK();
   const [pkp, setPkp] = useState<{
     tokenId: any;
     publicKey: string;
@@ -62,64 +67,6 @@ function App() {
     }
   }, []);
 
-  async function isRecent(telegramInitData: string) {
-    const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
-    const auth_date = Number(urlParams.get("auth_date"));
-    const isRecent = Date.now() / 1000 - auth_date < 600;
-    return isRecent;
-  }
-
-  async function verifyInitData(
-    telegramInitData: string,
-    botToken: string
-  ) {
-    const urlParams: URLSearchParams = new URLSearchParams(telegramInitData);
-
-    const hash = urlParams.get("hash");
-    urlParams.delete("hash");
-    urlParams.sort();
-
-    let dataCheckString = "";
-    for (const [key, value] of urlParams.entries()) {
-      dataCheckString += `${key}=${value}\n`;
-    }
-    dataCheckString = dataCheckString.slice(0, -1);
-
-    const encoder = new TextEncoder();
-    const secretKey = await window.crypto.subtle.importKey(
-      "raw",
-      encoder.encode("WebAppData"),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const botTokenKey = await window.crypto.subtle.sign(
-      "HMAC",
-      secretKey,
-      encoder.encode(botToken)
-    );
-
-    const calculatedHash = await window.crypto.subtle.sign(
-      "HMAC",
-      await window.crypto.subtle.importKey(
-        "raw",
-        botTokenKey,
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      ),
-      encoder.encode(dataCheckString)
-    );
-
-    const calculatedHashHex = Array.from(new Uint8Array(calculatedHash))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    const isVerified = hash === calculatedHashHex;
-    return isVerified;
-  }
-
   const connect = async () => {
     try {
       const accounts = await sdk?.connect();
@@ -134,7 +81,12 @@ function App() {
     }
   };
 
-  const getSS = async () => {
+  const mintPkp = async () => {
+    const pkp = await mintNewPkp(provider);
+    setPkp(pkp);
+  };
+
+  const getSessionSigs = async () => {
     const litNodeClient = await connectToLitNodes();
     const sessionSignatures = await getSessionSignatures(
       litNodeClient,
@@ -142,11 +94,6 @@ function App() {
       data
     );
     setSessionSignatures(sessionSignatures);
-  };
-
-  const mintPkp = async () => {
-    const pkp = await connectToLitContracts(provider);
-    setPkp(pkp);
   };
 
   return (
@@ -167,7 +114,7 @@ function App() {
       </button>
       {connected && <div>{account && `Connected account: ${account}`}</div>}
       {connected && (
-        <button style={{ padding: 10, margin: 10 }} onClick={getSS}>
+        <button style={{ padding: 10, margin: 10 }} onClick={getSessionSigs}>
           Get Session Signatures
         </button>
       )}

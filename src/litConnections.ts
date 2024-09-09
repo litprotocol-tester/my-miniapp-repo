@@ -19,7 +19,7 @@ export const connectToLitNodes = async () => {
     return litNodeClient;
 };
 
-export const connectToLitContracts = async (provider: any) => {
+export const mintNewPkp = async (provider: any) => {
   await provider.send("eth_requestAccounts", []);
   const ethersProvider = new ethers.providers.Web3Provider(provider);
   const signer = ethersProvider.getSigner();
