@@ -105,6 +105,4 @@ If you'd like to dive deeper into the code to understand how this example works,
   - The Lit Action is hardcoded to only communicate with the PKP Permission contract deployed on Chronicle Yellowstone at `0x60C1ddC8b9e38F730F0e7B70A2F84C1A98A69167`.
   - It's also hardcoded to only use the Auth Method with the type: `keccak256('Lit Developer Guide Telegram Auth Example')`.
 
-Using the Telegram Mini App on mobile with the MetaMask app:
-![Mobile Example](https://github.com/user-attachments/assets/6657b4d7-b7b7-4d30-8b75-b649efa4462a)
 
