@@ -35,16 +35,15 @@ async function setupLitContracts(provider: any) {
 
 export const mintNewPkp = async (provider: any) => {
   const { litContracts } = await setupLitContracts(provider);
-
   const hash = await Hash.of(litActionCode);
   const pkp = (await litContracts.pkpNftContractUtils.write.mint()).pkp;
 
-  const permitted = await litContracts.addPermittedAction({
+  await litContracts.addPermittedAction({
     authMethodScopes: [AuthMethodScope.SignAnything],
     pkpTokenId: pkp.tokenId,
     ipfsId: hash,
   });
-  console.log(permitted);
+
   return pkp;
 };
 
