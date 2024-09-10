@@ -42,9 +42,35 @@ export const mintNewPkp = async (provider: any) => {
     return pkp;
 };
 
-export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: any, telegramUser: string) => {
+export const getSessionSignatures = async (litNodeClient: LitNodeClient, pkp: any, provider: any, telegramUser: string) => {
+  await provider.send("eth_requestAccounts", []);
+  const ethersProvider = new ethers.providers.Web3Provider(provider);
+  const signer = ethersProvider.getSigner();
+
+    const litContracts = new LitContracts({
+      signer,
+      network: LitNetwork.DatilTest,
+  });
+  await litContracts.connect();
+
+    const capacityTokenId = (
+      await litContracts.mintCapacityCreditsNFT({
+        requestsPerKilosecond: 10,
+        daysUntilUTCMidnightExpiration: 1,
+      })
+    ).capacityTokenIdStr;
+
+  const { capacityDelegationAuthSig } =
+    await litNodeClient.createCapacityDelegationAuthSig({
+      dAppOwnerWallet: signer,
+      capacityTokenId,
+      delegateeAddresses: [pkp.ethAddress],
+      uses: "1",
+    });
+
     const sessionSignatures= await litNodeClient.getPkpSessionSigs({
         pkpPublicKey: pkp.publicKey,
+        capabilityAuthSigs: [capacityDelegationAuthSig],
         litActionCode: Buffer.from(litActionCode).toString("base64"),
         jsParams: {
             telegramUserData: telegramUser,
