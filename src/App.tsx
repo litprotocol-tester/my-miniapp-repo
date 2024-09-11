@@ -15,6 +15,7 @@ import {
 
 const VITE_TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
 
+
 interface TelegramWebApp {
   ready: () => void;
   showPopup: (params: {
