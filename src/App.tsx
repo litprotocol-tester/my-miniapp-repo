@@ -57,7 +57,7 @@ function App() {
         setRecent(isRecent);
       });
 
-      verifyInitData(tgApp.initData, VITE_TELEGRAM_BOT_SECRET)
+      verifyInitData(tgApp.initData, import.meta.env.VITE_TELEGRAM_BOT_SECRET)
         .then(( isVerified ) => {
           setValid(isVerified);
         })
