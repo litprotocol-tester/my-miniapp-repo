@@ -13,9 +13,6 @@ import {
   verifyInitData,
 } from "./telegramAuthHelpers";
 
-const VITE_TELEGRAM_BOT_SECRET = import.meta.env.VITE_TELEGRAM_BOT_SECRET;
-
-
 interface TelegramWebApp {
   ready: () => void;
   showPopup: (params: {
