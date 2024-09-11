@@ -13,7 +13,7 @@ import {
   verifyInitData,
 } from "./telegramAuthHelpers";
 
-const VITE_TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+const VITE_TELEGRAM_BOT_SECRET = import.meta.env.VITE_TELEGRAM_BOT_SECRET;
 
 
 interface TelegramWebApp {
@@ -60,7 +60,7 @@ function App() {
         setRecent(isRecent);
       });
 
-      verifyInitData(tgApp.initData, VITE_TELEGRAM_BOT_TOKEN)
+      verifyInitData(tgApp.initData, VITE_TELEGRAM_BOT_SECRET)
         .then(( isVerified ) => {
           setValid(isVerified);
         })
