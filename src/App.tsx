@@ -55,6 +55,7 @@ function App() {
       setWebApp(tgApp);
       setData(tgApp.initData);
 
+      console.log("init data", tgApp.initData);
       isRecent(tgApp.initData).then((isRecent) => {
         setRecent(isRecent);
       });
